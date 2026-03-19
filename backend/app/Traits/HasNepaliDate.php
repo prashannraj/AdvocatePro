@@ -68,23 +68,20 @@ trait HasNepaliDate
     }
 
     /**
-     * Override the attribute setting logic to convert BS to AD.
+     * Override the attribute setting logic to handle Nepali digits and BS dates.
      */
     public function setAttribute($key, $value)
     {
-        if (in_array($key, $this->nepaliDateFields()) && $value) {
-            // If it's already a valid AD date (standard YYYY-MM-DD where YYYY < 2050 approx),
-            // we might not want to convert it if it's being set from internal logic.
-            // But for this app, we'll assume anything set to these fields is BS.
-            // BS dates are usually > 2050 (currently 2081).
-            if (is_string($value)) {
-                $englishValue = NepaliDateHelper::convertToEnglishDigits($value);
-                $parts = explode('-', $englishValue);
+        if (is_string($value)) {
+            // First, ALWAYS convert Nepali digits to English digits for any string
+            $value = NepaliDateHelper::convertToEnglishDigits($value);
+
+            // Then, if it's a dedicated Nepali date field, handle BS -> AD conversion
+            if (in_array($key, $this->nepaliDateFields()) && !empty($value)) {
+                $parts = explode('-', $value);
+                // If it looks like a BS date (Year > 2050), convert to AD
                 if (count($parts) === 3 && (int)$parts[0] > 2050) {
                     $value = NepaliDateHelper::bsToAd($value);
-                } else {
-                    // Even if it's already AD, ensure digits are English for the database
-                    $value = $englishValue;
                 }
             }
         }
