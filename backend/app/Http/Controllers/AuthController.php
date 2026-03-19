@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\ActivityLog;
+use App\Mail\GeneralNotification;
 
 class AuthController extends Controller
 {
@@ -48,7 +49,7 @@ class AuthController extends Controller
         $user->otp_expires_at = Carbon::now()->addMinutes(2);
         $user->save();
 
-        // Send OTP via Email (Simplified for demo, in real app use a Mailable)
+        // Send OTP via Email
         $this->sendOtpEmail($user, $otp);
 
         return response()->json([
@@ -84,10 +85,8 @@ class AuthController extends Controller
     protected function sendOtpEmail($user, $otp)
     {
         try {
-            Mail::raw("Your Advocate Pro login OTP is: $otp. It will expire in 2 minutes.", function ($message) use ($user) {
-                $message->to($user->email)
-                    ->subject('Login OTP - Advocate Pro');
-            });
+            $content = "Your <strong>Advocate Pro</strong> login OTP is: <h2 style='color: #4f46e5; margin: 10px 0;'>$otp</h2> It will expire in 2 minutes.";
+            Mail::to($user->email)->send(new GeneralNotification($content, 'Login OTP - Advocate Pro'));
         } catch (\Exception $e) {
             Log::error("Failed to send OTP email: " . $e->getMessage());
         }
