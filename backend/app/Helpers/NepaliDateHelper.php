@@ -40,6 +40,9 @@ class NepaliDateHelper
         if (!$bsDate) return null;
         
         try {
+            // Convert Nepali digits to English digits first
+            $bsDate = self::convertToEnglishDigits($bsDate);
+            
             $parts = explode('-', $bsDate);
             if (count($parts) !== 3) return $bsDate;
             
@@ -58,5 +61,15 @@ class NepaliDateHelper
         $eng = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         $nep = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
         return str_replace($eng, $nep, (string)$number);
+    }
+
+    /**
+     * Convert Nepali digits to English digits
+     */
+    public static function convertToEnglishDigits($number)
+    {
+        $eng = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+        $nep = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+        return str_replace($nep, $eng, (string)$number);
     }
 }
