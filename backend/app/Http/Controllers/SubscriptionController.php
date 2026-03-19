@@ -39,7 +39,7 @@ class SubscriptionController extends Controller
             ->where('is_used', false)
             ->first();
 
-        // Also allow the demo trial key for now
+        // Also allow the demo trial key for now (TRIAL key can be used multiple times)
         if (!$license && $key !== 'ADV-2026-TRIAL-KEY') {
             return response()->json([
                 'message' => 'Invalid or expired activation key. Please contact Appan Technology Pvt. Ltd.',
@@ -53,12 +53,24 @@ class SubscriptionController extends Controller
         $isTrial = ($key === 'ADV-2026-TRIAL-KEY');
         $expiresAt = $isTrial ? now()->addDays(15) : now()->addYear();
 
-        $subscription = Subscription::create([
-            'activation_key' => $key,
-            'activated_at' => now(),
-            'expires_at' => $expiresAt,
-            'status' => 'active',
-        ]);
+        // For trial key, we update if it exists, otherwise create
+        if ($isTrial) {
+            $subscription = Subscription::updateOrCreate(
+                ['activation_key' => $key],
+                [
+                    'activated_at' => now(),
+                    'expires_at' => $expiresAt,
+                    'status' => 'active',
+                ]
+            );
+        } else {
+            $subscription = Subscription::create([
+                'activation_key' => $key,
+                'activated_at' => now(),
+                'expires_at' => $expiresAt,
+                'status' => 'active',
+            ]);
+        }
 
         // Mark the license as used if it was a real one
         if ($license) {
