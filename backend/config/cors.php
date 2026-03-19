@@ -19,7 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_origins' => [
+        'http://localhost:3000',
+        'https://advocate.getappantech.com',
+        'https://backend.getappantech.com',
+    ],
 
     'allowed_origins_patterns' => [],
 
