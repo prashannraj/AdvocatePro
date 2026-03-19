@@ -300,7 +300,7 @@ export default function PayrollPage() {
                   required
                   min="0"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                  value={formData.base_salary}
+                  value={formData.base_salary || ''}
                   onChange={(e) => setFormData({...formData, base_salary: parseFloat(e.target.value) || 0})}
                 />
               </div>
@@ -323,7 +323,7 @@ export default function PayrollPage() {
                 type="number"
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.allowances}
+                value={formData.allowances || ''}
                 onChange={(e) => setFormData({...formData, allowances: parseFloat(e.target.value) || 0})}
               />
             </div>
@@ -333,7 +333,7 @@ export default function PayrollPage() {
                 type="number"
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.deductions}
+                value={formData.deductions || ''}
                 onChange={(e) => setFormData({...formData, deductions: parseFloat(e.target.value) || 0})}
               />
             </div>
