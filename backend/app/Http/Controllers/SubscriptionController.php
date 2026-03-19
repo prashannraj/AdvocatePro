@@ -39,7 +39,16 @@ class SubscriptionController extends Controller
             ->where('is_used', false)
             ->first();
 
-        // Also allow the demo trial key for now (TRIAL key can be used multiple times)
+        // Check if this specific key has ALREADY been used for a subscription
+        $existingSubscription = Subscription::where('activation_key', $key)->first();
+
+        if ($existingSubscription) {
+            return response()->json([
+                'message' => 'This activation key has already been used. Please contact Appan Technology Pvt. Ltd. for a new key.',
+            ], 422);
+        }
+
+        // Only allow the demo trial key if it hasn't been used yet
         if (!$license && $key !== 'ADV-2026-TRIAL-KEY') {
             return response()->json([
                 'message' => 'Invalid or expired activation key. Please contact Appan Technology Pvt. Ltd.',
@@ -53,24 +62,12 @@ class SubscriptionController extends Controller
         $isTrial = ($key === 'ADV-2026-TRIAL-KEY');
         $expiresAt = $isTrial ? now()->addDays(15) : now()->addYear();
 
-        // For trial key, we update if it exists, otherwise create
-        if ($isTrial) {
-            $subscription = Subscription::updateOrCreate(
-                ['activation_key' => $key],
-                [
-                    'activated_at' => now(),
-                    'expires_at' => $expiresAt,
-                    'status' => 'active',
-                ]
-            );
-        } else {
-            $subscription = Subscription::create([
-                'activation_key' => $key,
-                'activated_at' => now(),
-                'expires_at' => $expiresAt,
-                'status' => 'active',
-            ]);
-        }
+        $subscription = Subscription::create([
+            'activation_key' => $key,
+            'activated_at' => now(),
+            'expires_at' => $expiresAt,
+            'status' => 'active',
+        ]);
 
         // Mark the license as used if it was a real one
         if ($license) {
