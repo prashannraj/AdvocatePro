@@ -5,12 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsActivity;
+use App\Traits\HasNepaliDate;
 
 class CaseRecord extends Model
 {
     /** @use HasFactory<\Database\Factories\CaseRecordFactory> */
     use HasFactory;
     use LogsActivity;
+    use HasNepaliDate;
+
+    protected $nepaliDates = ['filed_date', 'closed_date'];
 
     protected $fillable = [
         'case_number', 'bs_year', 'case_type_code', 'sequential_number',

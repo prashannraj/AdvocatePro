@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "30ede9cc2d9eecae449b0452a2292045",
+    "content-hash": "f824ce4b33e0b655b8350a5ef81c42b1",
     "packages": [
         {
             "name": "brick/math",
@@ -507,6 +507,54 @@
                 }
             ],
             "time": "2025-03-06T22:45:56+00:00"
+        },
+        {
+            "name": "ernilambar/nepali-date",
+            "version": "1.0.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ernilambar/nepali-date.git",
+                "reference": "f28ecb39294e0e5f5cd4457762004207394f1261"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ernilambar/nepali-date/zipball/f28ecb39294e0e5f5cd4457762004207394f1261",
+                "reference": "f28ecb39294e0e5f5cd4457762004207394f1261",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Nilambar\\NepaliDate\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nilambar Sharma",
+                    "email": "nilambar@outlook.com",
+                    "homepage": "https://www.nilambar.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Nepali Date",
+            "homepage": "https://github.com/ernilambar/nepali-date",
+            "keywords": [
+                "bikram-sambat",
+                "date",
+                "nepali"
+            ],
+            "support": {
+                "issues": "https://github.com/ernilambar/nepali-date/issues",
+                "source": "https://github.com/ernilambar/nepali-date/tree/1.0.8"
+            },
+            "time": "2025-03-17T07:07:07+00:00"
         },
         {
             "name": "fruitcake/php-cors",

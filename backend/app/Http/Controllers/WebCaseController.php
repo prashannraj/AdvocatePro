@@ -48,7 +48,7 @@ class WebCaseController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|string',
-            'filed_date' => 'required|date',
+            'filed_date' => 'required|string',
         ]);
 
         if (empty($validated['sequential_number'])) {
@@ -98,7 +98,7 @@ class WebCaseController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|string',
-            'filed_date' => 'required|date',
+            'filed_date' => 'required|string',
         ]);
 
         $case->update($validated);

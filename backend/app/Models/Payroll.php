@@ -4,11 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasNepaliDate;
 
 class Payroll extends Model
 {
     /** @use HasFactory<\Database\Factories\PayrollFactory> */
     use HasFactory;
+    use HasNepaliDate;
+
+    protected $nepaliDates = ['payment_date'];
 
     protected $fillable = [
         'user_id', 'base_salary', 'allowances', 

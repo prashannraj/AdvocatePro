@@ -19,7 +19,7 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'lawyer_id' => 'required|exists:lawyers,id',
-            'appointment_date' => 'required|date',
+            'appointment_date' => 'required|string',
             'start_time' => 'required|string',
             'end_time' => 'required|string',
             'status' => 'required|in:Pending,Confirmed,Cancelled',
@@ -41,7 +41,7 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'client_id' => 'sometimes|exists:clients,id',
             'lawyer_id' => 'sometimes|exists:lawyers,id',
-            'appointment_date' => 'sometimes|date',
+            'appointment_date' => 'sometimes|string',
             'start_time' => 'sometimes|string',
             'end_time' => 'sometimes|string',
             'status' => 'sometimes|in:Pending,Confirmed,Cancelled',

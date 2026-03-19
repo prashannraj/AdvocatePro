@@ -20,7 +20,7 @@ class PayrollController extends Controller
             'allowances' => 'required|numeric',
             'deductions' => 'required|numeric',
             'net_salary' => 'required|numeric',
-            'payment_date' => 'required|date',
+            'payment_date' => 'required|string',
             'status' => 'required|in:Paid,Pending',
         ]);
 
@@ -41,7 +41,7 @@ class PayrollController extends Controller
             'allowances' => 'sometimes|numeric',
             'deductions' => 'sometimes|numeric',
             'net_salary' => 'sometimes|numeric',
-            'payment_date' => 'sometimes|date',
+            'payment_date' => 'sometimes|string',
             'status' => 'sometimes|in:Paid,Pending',
         ]);
 

@@ -22,7 +22,7 @@ class CaseRecordController extends Controller
             'lawyer_id' => 'required|exists:lawyers,id',
             'status' => 'required|in:Open,Pending,Closed',
             'court_id' => 'required|exists:courts,id',
-            'filed_date' => 'required|date',
+            'filed_date' => 'required|string',
             'bs_year' => 'required|string',
             'case_type_code' => 'required|string',
         ]);
@@ -78,8 +78,8 @@ class CaseRecordController extends Controller
             'lawyer_id' => 'sometimes|exists:lawyers,id',
             'status' => 'sometimes|in:Open,Pending,Closed',
             'court_id' => 'sometimes|exists:courts,id',
-            'filed_date' => 'sometimes|date',
-            'closed_date' => 'nullable|date',
+            'filed_date' => 'sometimes|string',
+            'closed_date' => 'nullable|string',
             'bs_year' => 'sometimes|string',
             'case_type_code' => 'sometimes|string',
         ]);

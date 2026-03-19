@@ -4,11 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasNepaliDate;
 
 class Attendance extends Model
 {
     /** @use HasFactory<\Database\Factories\AttendanceFactory> */
     use HasFactory;
+    use HasNepaliDate;
+
+    protected $nepaliDates = ['date'];
 
     protected $fillable = ['user_id', 'check_in', 'check_out', 'date'];
 

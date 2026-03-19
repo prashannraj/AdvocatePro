@@ -18,7 +18,7 @@ class ContractController extends Controller
             'client_id' => 'required|exists:clients,id',
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
-            'expiry_date' => 'nullable|date',
+            'expiry_date' => 'nullable|string',
             'status' => 'required|in:Draft,Active,Expired',
         ]);
 
@@ -37,7 +37,7 @@ class ContractController extends Controller
             'client_id' => 'sometimes|exists:clients,id',
             'title' => 'sometimes|string|max:255',
             'content' => 'nullable|string',
-            'expiry_date' => 'nullable|date',
+            'expiry_date' => 'nullable|string',
             'status' => 'sometimes|in:Draft,Active,Expired',
         ]);
 

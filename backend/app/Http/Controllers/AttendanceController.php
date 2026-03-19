@@ -18,7 +18,7 @@ class AttendanceController extends Controller
             'user_id' => 'required|exists:users,id',
             'check_in' => 'required|string',
             'check_out' => 'nullable|string',
-            'date' => 'required|date',
+            'date' => 'required|string',
         ]);
 
         $attendance = Attendance::create($validated);
@@ -36,7 +36,7 @@ class AttendanceController extends Controller
             'user_id' => 'sometimes|exists:users,id',
             'check_in' => 'sometimes|string',
             'check_out' => 'nullable|string',
-            'date' => 'sometimes|date',
+            'date' => 'sometimes|string',
         ]);
 
         $attendance->update($validated);

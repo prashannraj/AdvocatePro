@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import PrintLayout from '@/components/PrintLayout';
+import NepaliDatePicker from '@/components/NepaliDatePicker';
 import { 
   Briefcase, 
   Search,
@@ -330,7 +331,7 @@ export default function CasesPage() {
                     type="text"
                     required
                     placeholder="e.g. 081"
-                    className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-gray-900 transition-all"
+                    className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-gray-900 transition-all font-mono"
                     value={formData.bs_year}
                     onChange={(e) => setFormData({...formData, bs_year: e.target.value})}
                   />
@@ -374,12 +375,17 @@ export default function CasesPage() {
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Filed Date</label>
-                <input
-                  type="date"
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium transition-all"
+                <NepaliDatePicker
                   value={formData.filed_date}
-                  onChange={(e) => setFormData({...formData, filed_date: e.target.value})}
+                  onChange={(date) => {
+                    const year = date.split('-')[0].substring(1); // Extract "81" from "2081" or just "81"
+                    const yearShort = year.length > 2 ? year.substring(year.length - 2) : year;
+                    setFormData({
+                      ...formData, 
+                      filed_date: date,
+                      bs_year: formData.bs_year || yearShort
+                    });
+                  }}
                 />
               </div>
               <div>

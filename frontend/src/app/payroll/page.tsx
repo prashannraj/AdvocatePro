@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
+import NepaliDatePicker from '@/components/NepaliDatePicker';
 import { 
   Plus,
   Loader2,
@@ -307,13 +308,9 @@ export default function PayrollPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Payment Date</label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="date"
-                  required
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                <NepaliDatePicker
                   value={formData.payment_date}
-                  onChange={(e) => setFormData({...formData, payment_date: e.target.value})}
+                  onChange={(date) => setFormData({...formData, payment_date: date})}
                 />
               </div>
             </div>

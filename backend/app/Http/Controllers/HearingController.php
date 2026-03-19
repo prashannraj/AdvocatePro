@@ -18,7 +18,7 @@ class HearingController extends Controller
     {
         $validated = $request->validate([
             'case_id' => 'required|exists:case_records,id',
-            'hearing_date' => 'required|date',
+            'hearing_date' => 'required|string',
             'judge_name' => 'required|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'required|in:Scheduled,Adjourned,Completed',
@@ -39,7 +39,7 @@ class HearingController extends Controller
     {
         $validated = $request->validate([
             'case_id' => 'sometimes|exists:case_records,id',
-            'hearing_date' => 'sometimes|date',
+            'hearing_date' => 'sometimes|string',
             'judge_name' => 'sometimes|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'sometimes|in:Scheduled,Adjourned,Completed',
