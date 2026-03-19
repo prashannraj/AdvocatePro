@@ -17,8 +17,8 @@ const NepaliDatePickerComponent: React.FC<Props> = ({ value, onChange, className
       <NepaliDatePicker
         value={value}
         onChange={onChange}
-        options={{ calenderType: "Nepali", format: "YYYY-MM-DD" }}
-        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+        options={{ closeOnSelect: true }}
+        inputClassName="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
       />
     </div>
   );
