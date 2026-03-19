@@ -14,6 +14,13 @@ class Payroll extends Model
 
     protected $nepaliDates = ['payment_date'];
 
+    protected $casts = [
+        'base_salary' => 'float',
+        'allowances' => 'float',
+        'deductions' => 'float',
+        'net_salary' => 'float',
+    ];
+
     protected $fillable = [
         'user_id', 'base_salary', 'allowances', 
         'deductions', 'net_salary', 'payment_date', 'status'

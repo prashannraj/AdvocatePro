@@ -54,9 +54,9 @@ export default function PayrollPage() {
   // Form states
   const [formData, setFormData] = useState({
     user_id: '',
-    base_salary: 0,
-    allowances: 0,
-    deductions: 0,
+    base_salary: '' as any,
+    allowances: '' as any,
+    deductions: '' as any,
     net_salary: 0,
     payment_date: '',
     status: 'Pending' as 'Paid' | 'Pending',
@@ -103,9 +103,9 @@ export default function PayrollPage() {
     setEditingRecord(null);
     setFormData({
       user_id: '',
-      base_salary: 0,
-      allowances: 0,
-      deductions: 0,
+      base_salary: '',
+      allowances: '',
+      deductions: '',
       net_salary: 0,
       payment_date: new Date().toISOString().split('T')[0],
       status: 'Pending',
@@ -117,9 +117,9 @@ export default function PayrollPage() {
     setEditingRecord(record);
     setFormData({
       user_id: record.user_id.toString(),
-      base_salary: record.base_salary,
-      allowances: record.allowances,
-      deductions: record.deductions,
+      base_salary: record.base_salary.toString(),
+      allowances: record.allowances.toString(),
+      deductions: record.deductions.toString(),
       net_salary: record.net_salary,
       payment_date: record.payment_date,
       status: record.status,
@@ -136,10 +136,17 @@ export default function PayrollPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const payload = {
+        ...formData,
+        base_salary: parseFloat(formData.base_salary) || 0,
+        allowances: parseFloat(formData.allowances) || 0,
+        deductions: parseFloat(formData.deductions) || 0,
+      };
+
       if (editingRecord) {
-        await api.put(`/payroll/${editingRecord.id}`, formData);
+        await api.put(`/payroll/${editingRecord.id}`, payload);
       } else {
-        await api.post('/payroll', formData);
+        await api.post('/payroll', payload);
       }
       setIsModalOpen(false);
       fetchData();
@@ -300,8 +307,13 @@ export default function PayrollPage() {
                   required
                   min="0"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                  value={formData.base_salary || ''}
-                  onChange={(e) => setFormData({...formData, base_salary: parseFloat(e.target.value) || 0})}
+                  value={formData.base_salary}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Remove leading zeros if there are other digits
+                    const sanitized = val.length > 1 && val.startsWith('0') ? val.replace(/^0+/, '') : val;
+                    setFormData({...formData, base_salary: sanitized});
+                  }}
                 />
               </div>
             </div>
@@ -323,8 +335,12 @@ export default function PayrollPage() {
                 type="number"
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.allowances || ''}
-                onChange={(e) => setFormData({...formData, allowances: parseFloat(e.target.value) || 0})}
+                value={formData.allowances}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const sanitized = val.length > 1 && val.startsWith('0') ? val.replace(/^0+/, '') : val;
+                  setFormData({...formData, allowances: sanitized});
+                }}
               />
             </div>
             <div>
@@ -333,8 +349,12 @@ export default function PayrollPage() {
                 type="number"
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.deductions || ''}
-                onChange={(e) => setFormData({...formData, deductions: parseFloat(e.target.value) || 0})}
+                value={formData.deductions}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const sanitized = val.length > 1 && val.startsWith('0') ? val.replace(/^0+/, '') : val;
+                  setFormData({...formData, deductions: sanitized});
+                }}
               />
             </div>
           </div>
