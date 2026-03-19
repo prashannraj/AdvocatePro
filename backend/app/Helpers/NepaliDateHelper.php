@@ -11,7 +11,11 @@ class NepaliDateHelper
     private static function getCalendar()
     {
         if (!self::$calendar) {
-            self::$calendar = new NepaliCalendar();
+            if (class_exists('\Nilambar\NepaliDate\NepaliCalendar')) {
+                self::$calendar = new \Nilambar\NepaliDate\NepaliCalendar();
+            } else {
+                return null;
+            }
         }
         return self::$calendar;
     }
@@ -24,10 +28,15 @@ class NepaliDateHelper
         if (!$adDate) return null;
         
         try {
+            $calendar = self::getCalendar();
+            if (!$calendar) return $adDate;
+
             $date = date_parse($adDate);
-            $bs = self::getCalendar()->convertEnglishToNepali($date['year'], $date['month'], $date['day']);
+            if (!$date['year']) return $adDate;
+
+            $bs = $calendar->convertEnglishToNepali($date['year'], $date['month'], $date['day']);
             return sprintf('%04d-%02d-%02d', $bs['year'], $bs['month'], $bs['day']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return $adDate;
         }
     }
@@ -40,15 +49,18 @@ class NepaliDateHelper
         if (!$bsDate) return null;
         
         try {
+            $calendar = self::getCalendar();
+            if (!$calendar) return $bsDate;
+
             // Convert Nepali digits to English digits first
             $bsDate = self::convertToEnglishDigits($bsDate);
             
             $parts = explode('-', $bsDate);
             if (count($parts) !== 3) return $bsDate;
             
-            $ad = self::getCalendar()->convertNepaliToEnglish((int)$parts[0], (int)$parts[1], (int)$parts[2]);
+            $ad = $calendar->convertNepaliToEnglish((int)$parts[0], (int)$parts[1], (int)$parts[2]);
             return sprintf('%04d-%02d-%02d', $ad['year'], $ad['month'], $ad['day']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return $bsDate;
         }
     }
