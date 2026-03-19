@@ -82,6 +82,9 @@ trait HasNepaliDate
                 $parts = explode('-', $englishValue);
                 if (count($parts) === 3 && (int)$parts[0] > 2050) {
                     $value = NepaliDateHelper::bsToAd($value);
+                } else {
+                    // Even if it's already AD, ensure digits are English for the database
+                    $value = $englishValue;
                 }
             }
         }
