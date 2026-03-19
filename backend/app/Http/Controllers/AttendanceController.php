@@ -21,6 +21,14 @@ class AttendanceController extends Controller
             'date' => 'required|string',
         ]);
 
+        // If time is provided without date, prepend the date
+        if (isset($validated['check_in']) && !str_contains($validated['check_in'], '-')) {
+            $validated['check_in'] = $validated['date'] . ' ' . $validated['check_in'];
+        }
+        if (isset($validated['check_out']) && !str_contains($validated['check_out'], '-')) {
+            $validated['check_out'] = $validated['date'] . ' ' . $validated['check_out'];
+        }
+
         $attendance = Attendance::create($validated);
         return response()->json($attendance, 201);
     }
@@ -38,6 +46,15 @@ class AttendanceController extends Controller
             'check_out' => 'nullable|string',
             'date' => 'sometimes|string',
         ]);
+
+        $date = $validated['date'] ?? $attendance->date;
+
+        if (isset($validated['check_in']) && !str_contains($validated['check_in'], '-')) {
+            $validated['check_in'] = $date . ' ' . $validated['check_in'];
+        }
+        if (isset($validated['check_out']) && !str_contains($validated['check_out'], '-')) {
+            $validated['check_out'] = $date . ' ' . $validated['check_out'];
+        }
 
         $attendance->update($validated);
         return response()->json($attendance);
