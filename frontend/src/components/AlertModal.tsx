@@ -36,17 +36,17 @@ export default function AlertModal({ isOpen, onClose, title, message, type = 'in
   };
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div 
-          className="fixed inset-0 transition-opacity bg-gray-900/60 backdrop-blur-sm" 
-          aria-hidden="true"
-          onClick={onClose}
-        ></div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 transition-opacity bg-gray-900/60 backdrop-blur-sm" 
+        aria-hidden="true"
+        onClick={onClose}
+      ></div>
 
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div className="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-3xl shadow-2xl sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-8">
+      {/* Modal content container */}
+      <div className="relative z-10 w-full max-w-sm transform transition-all">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8">
           <div className="absolute top-4 right-4">
             <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
               <X className="h-5 w-5" />
