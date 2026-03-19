@@ -33,23 +33,25 @@ class SubscriptionController extends Controller
         ]);
 
         $key = $request->activation_key;
+        $isTrial = ($key === 'ADV-2026-TRIAL-KEY');
 
         // Check if key exists in our generated licenses and hasn't been used
         $license = LicenseKey::where('key', $key)
             ->where('is_used', false)
             ->first();
 
-        // Check if this specific key has ALREADY been used for a subscription
-        $existingSubscription = Subscription::where('activation_key', $key)->first();
-
-        if ($existingSubscription) {
-            return response()->json([
-                'message' => 'This activation key has already been used. Please contact Appan Technology Pvt. Ltd. for a new key.',
-            ], 422);
+        // Only block reuse for REAL licenses, allow TRIAL key to be reused for testing/demo
+        if (!$isTrial) {
+            $existingSubscription = Subscription::where('activation_key', $key)->first();
+            if ($existingSubscription) {
+                return response()->json([
+                    'message' => 'This activation key has already been used. Please contact Appan Technology Pvt. Ltd. for a new key.',
+                ], 422);
+            }
         }
 
-        // Only allow the demo trial key if it hasn't been used yet
-        if (!$license && $key !== 'ADV-2026-TRIAL-KEY') {
+        // Only allow the demo trial key if it's the specific trial key or a valid license
+        if (!$license && !$isTrial) {
             return response()->json([
                 'message' => 'Invalid or expired activation key. Please contact Appan Technology Pvt. Ltd.',
             ], 422);
@@ -59,15 +61,26 @@ class SubscriptionController extends Controller
         Subscription::where('status', 'active')->update(['status' => 'expired']);
 
         // Determine expiration date: 15 days for trial key, 1 year for others
-        $isTrial = ($key === 'ADV-2026-TRIAL-KEY');
         $expiresAt = $isTrial ? now()->addDays(15) : now()->addYear();
 
-        $subscription = Subscription::create([
-            'activation_key' => $key,
-            'activated_at' => now(),
-            'expires_at' => $expiresAt,
-            'status' => 'active',
-        ]);
+        // For trial key, we update if it exists, otherwise create
+        if ($isTrial) {
+            $subscription = Subscription::updateOrCreate(
+                ['activation_key' => $key],
+                [
+                    'activated_at' => now(),
+                    'expires_at' => $expiresAt,
+                    'status' => 'active',
+                ]
+            );
+        } else {
+            $subscription = Subscription::create([
+                'activation_key' => $key,
+                'activated_at' => now(),
+                'expires_at' => $expiresAt,
+                'status' => 'active',
+            ]);
+        }
 
         // Mark the license as used if it was a real one
         if ($license) {
