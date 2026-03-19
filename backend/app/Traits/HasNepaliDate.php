@@ -36,7 +36,8 @@ trait HasNepaliDate
                 $bsDateStr = NepaliDateHelper::adToBs($value->format('Y-m-d'));
             } else if (is_string($value) && !empty($value)) {
                 // Check if it's already a BS date (e.g. 2081-...)
-                $parts = explode('-', $value);
+                $englishValue = NepaliDateHelper::convertToEnglishDigits($value);
+                $parts = explode('-', $englishValue);
                 if (count($parts) === 3 && (int)$parts[0] > 2050) {
                     $bsDateStr = $value;
                 } else {
@@ -77,7 +78,8 @@ trait HasNepaliDate
             // But for this app, we'll assume anything set to these fields is BS.
             // BS dates are usually > 2050 (currently 2081).
             if (is_string($value)) {
-                $parts = explode('-', $value);
+                $englishValue = NepaliDateHelper::convertToEnglishDigits($value);
+                $parts = explode('-', $englishValue);
                 if (count($parts) === 3 && (int)$parts[0] > 2050) {
                     $value = NepaliDateHelper::bsToAd($value);
                 }
