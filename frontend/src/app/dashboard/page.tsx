@@ -221,7 +221,7 @@ export default function DashboardPage() {
                     <Gavel className="h-5 w-5 mr-2 text-indigo-600 print:hidden" />
                     Upcoming Hearings
                   </h3>
-                  <Link href="/hearings" className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-widest">View All</Link>
+                  <Link href="/schedule" className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-widest">View All</Link>
                 </div>
                 <div className="space-y-4">
                   {upcomingHearings.length > 0 ? upcomingHearings.map((hearing) => (
