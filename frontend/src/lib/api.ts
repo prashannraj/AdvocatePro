@@ -37,4 +37,14 @@ api.interceptors.response.use(
   }
 );
 
+export const getNepaliDateNow = async () => {
+  try {
+    const response = await api.get('/nepali-date/now');
+    return response.data.date;
+  } catch (error) {
+    console.error('Error fetching current Nepali date:', error);
+    return new Date().toISOString().split('T')[0]; // Fallback to AD date if API fails
+  }
+};
+
 export default api;

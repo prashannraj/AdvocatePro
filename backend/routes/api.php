@@ -42,6 +42,7 @@ Route::middleware(['auth:sanctum', 'subscription'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/nepali-date/now', [DashboardController::class, 'getNepaliDateNow']);
     
     // Resourceful Routes for CRUD
     Route::apiResource('users', UserController::class);

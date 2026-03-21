@@ -21,6 +21,14 @@ class NepaliDateHelper
     }
 
     /**
+     * Get current BS date (Y-m-d)
+     */
+    public static function now()
+    {
+        return self::adToBs(date('Y-m-d'));
+    }
+
+    /**
      * Convert AD date (Y-m-d) to BS date (Y-m-d)
      */
     public static function adToBs($adDate)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { getNepaliDateNow } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import NepaliDatePicker from '@/components/NepaliDatePicker';
@@ -84,11 +84,12 @@ export default function SchedulePage() {
     }
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = async () => {
     setEditingHearing(null);
+    const currentDate = await getNepaliDateNow();
     setFormData({
       case_id: '',
-      hearing_date: new Date().toISOString().split('T')[0],
+      hearing_date: currentDate,
       judge_name: '',
       notes: '',
       status: 'Scheduled',

@@ -13,9 +13,17 @@ use App\Models\Attendance;
 use App\Models\Payroll;
 use App\Models\Court;
 use Carbon\Carbon;
+use App\Helpers\NepaliDateHelper;
 
 class DashboardController extends Controller
 {
+    public function getNepaliDateNow()
+    {
+        return response()->json([
+            'date' => NepaliDateHelper::now()
+        ]);
+    }
+
     public function index(Request $request)
     {
         $search = $request->query('search');

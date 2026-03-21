@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { getNepaliDateNow } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import NepaliDatePicker from '@/components/NepaliDatePicker';
@@ -87,11 +87,12 @@ export default function AttendancePage() {
     }
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = async () => {
     setEditingRecord(null);
+    const currentDate = await getNepaliDateNow();
     setFormData({
       user_id: '',
-      date: new Date().toISOString().split('T')[0],
+      date: currentDate,
       check_in: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
       check_out: '',
     });

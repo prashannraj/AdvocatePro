@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { getNepaliDateNow } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import PrintLayout from '@/components/PrintLayout';
@@ -108,11 +108,14 @@ export default function CasesPage() {
     }
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = async () => {
     setEditingCase(null);
+    const currentDate = await getNepaliDateNow();
+    const currentYear = currentDate.split('-')[0].substring(1); // Extract year (e.g., 2081 -> 081)
+    
     setFormData({
       case_number: '',
-      bs_year: '080',
+      bs_year: currentYear,
       case_type_code: 'WO',
       title: '',
       description: '',
@@ -120,7 +123,7 @@ export default function CasesPage() {
       lawyer_id: '',
       court_id: '',
       status: 'Open',
-      filed_date: new Date().toISOString().split('T')[0],
+      filed_date: currentDate,
     });
     setIsModalOpen(true);
   };

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { getNepaliDateNow } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import NepaliDatePicker from '@/components/NepaliDatePicker';
@@ -99,15 +99,16 @@ export default function PayrollPage() {
     }
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = async () => {
     setEditingRecord(null);
+    const currentDate = await getNepaliDateNow();
     setFormData({
       user_id: '',
       base_salary: '',
       allowances: '',
       deductions: '',
       net_salary: 0,
-      payment_date: new Date().toISOString().split('T')[0],
+      payment_date: currentDate,
       status: 'Pending',
     });
     setIsModalOpen(true);

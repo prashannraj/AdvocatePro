@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import api, { getNepaliDateNow } from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import Modal from '@/components/Modal';
 import NepaliDatePicker from '@/components/NepaliDatePicker';
@@ -95,12 +95,13 @@ export default function AppointmentsPage() {
     }
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = async () => {
     setEditingAppointment(null);
+    const currentDate = await getNepaliDateNow();
     setFormData({
       client_id: '',
       lawyer_id: '',
-      appointment_date: new Date().toISOString().split('T')[0],
+      appointment_date: currentDate,
       start_time: '09:00',
       end_time: '10:00',
       status: 'Pending',
