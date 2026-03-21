@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Mail\GeneralNotification;
 
 class AppointmentController extends Controller
 {
@@ -61,6 +62,7 @@ class AppointmentController extends Controller
 
     protected function sendAppointmentNotification(Appointment $appointment, $type)
     {
+        $appointment->refresh();
         $appointment->load(['client.user', 'lawyer.user']);
         $clientUser = $appointment->client->user;
         $lawyerUser = $appointment->lawyer->user;
@@ -77,16 +79,22 @@ class AppointmentController extends Controller
         try {
             // Send to Client
             if ($clientUser && $clientUser->email) {
-                Mail::raw("Dear {$clientUser->name},\n\nAn appointment has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team", function ($message) use ($clientUser, $subject) {
-                    $message->to($clientUser->email)->subject($subject);
-                });
+                Mail::to($clientUser->email)->send(new GeneralNotification(
+                    "Dear {$clientUser->name},\n\nAn appointment has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team",
+                    $subject
+                ));
+            } else {
+                Log::warning("Appointment notification not sent to client: User or email missing.");
             }
 
             // Send to Lawyer
             if ($lawyerUser && $lawyerUser->email) {
-                Mail::raw("Dear Advocate {$lawyerUser->name},\n\nAn appointment has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team", function ($message) use ($lawyerUser, $subject) {
-                    $message->to($lawyerUser->email)->subject($subject);
-                });
+                Mail::to($lawyerUser->email)->send(new GeneralNotification(
+                    "Dear Advocate {$lawyerUser->name},\n\nAn appointment has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team",
+                    $subject
+                ));
+            } else {
+                Log::warning("Appointment notification not sent to lawyer: User or email missing.");
             }
         } catch (\Exception $e) {
             Log::error("Failed to send appointment notification: " . $e->getMessage());

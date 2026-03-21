@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\CaseRecord;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\GeneralNotification;
 
 class CaseRecordController extends Controller
 {
@@ -53,7 +56,51 @@ class CaseRecordController extends Controller
             'sequential_number' => $sequentialNumber
         ]));
 
+        $this->sendCaseNotification($case, 'created');
+
         return response()->json($case, 201);
+    }
+
+    protected function sendCaseNotification(CaseRecord $case, $type)
+    {
+        $case->refresh();
+        $case->load(['client.user', 'lawyer.user']);
+        $clientUser = $case->client->user;
+        $lawyerUser = $case->lawyer->user;
+
+        $details = "
+            Case Details:
+            Title: {$case->title}
+            Case Number: {$case->case_number}
+            Status: {$case->status}
+            Filed Date: {$case->filed_date}
+        ";
+
+        $subject = "Case " . ucfirst($type) . " - Advocate Pro";
+
+        try {
+            // Send to Client
+            if ($clientUser && $clientUser->email) {
+                Mail::to($clientUser->email)->send(new GeneralNotification(
+                    "Dear {$clientUser->name},\n\nA case has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team",
+                    $subject
+                ));
+            } else {
+                Log::warning("Case notification not sent to client: User or email missing.");
+            }
+
+            // Send to Lawyer
+            if ($lawyerUser && $lawyerUser->email) {
+                Mail::to($lawyerUser->email)->send(new GeneralNotification(
+                    "Dear Advocate {$lawyerUser->name},\n\nA case has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team",
+                    $subject
+                ));
+            } else {
+                Log::warning("Case notification not sent to lawyer: User or email missing.");
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to send case notification: " . $e->getMessage());
+        }
     }
 
     private function convertToNepaliDigits($number)
@@ -114,6 +161,7 @@ class CaseRecordController extends Controller
         }
 
         $case->update($validated);
+        $this->sendCaseNotification($case, 'updated');
         return response()->json($case);
     }
 

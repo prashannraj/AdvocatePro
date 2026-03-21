@@ -33,7 +33,10 @@ class AppServiceProvider extends ServiceProvider
         }
 
         if ($settings->has('email')) {
-            Config::set('mail.from.address', $settings->get('email'));
+            $email = $settings->get('email');
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Config::set('mail.from.address', $email);
+            }
         }
     }
 }
