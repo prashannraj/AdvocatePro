@@ -26,6 +26,21 @@ class Client extends Model
         return $this->hasMany(Company::class);
     }
 
+    public function ipAssets()
+    {
+        return $this->hasMany(IPAsset::class);
+    }
+
+    public function ipWatches()
+    {
+        return $this->hasMany(IPWatch::class);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

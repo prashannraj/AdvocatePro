@@ -27,6 +27,9 @@ use App\Http\Controllers\LicenseKeyController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CorporateTransactionController;
 use App\Http\Controllers\ComplianceTaskController;
+use App\Http\Controllers\IPAssetController;
+use App\Http\Controllers\InfringementActionController;
+use App\Http\Controllers\IPWatchController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -75,6 +78,11 @@ Route::middleware(['auth:sanctum', 'subscription'])->group(function () {
     Route::apiResource('companies', CompanyController::class);
     Route::apiResource('corporate-transactions', CorporateTransactionController::class);
     Route::apiResource('compliance-tasks', ComplianceTaskController::class);
-
+    
+    // IPR Routes
+    Route::apiResource('ip-assets', IPAssetController::class);
+    Route::apiResource('infringement-actions', InfringementActionController::class);
+    Route::apiResource('ip-watches', IPWatchController::class);
+    
     Route::get('/schedule', [ScheduleController::class, 'index']);
 });

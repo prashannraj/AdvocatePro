@@ -55,7 +55,15 @@ const DOCUMENT_CATEGORIES = [
   'Identification Documents (नागरिकता प्रमाणपत्र, etc.)',
   'Supporting Evidence / Annexures',
   'Court Fee Payment Receipt / Challan',
-  'Other Case-Specific Documents'
+  'Other Case-Specific Documents',
+  // IPR Specific
+  'Trademark Application Form',
+  'Patent Specification',
+  'Copyright Deposit Copy',
+  'Cease & Desist Letter',
+  'Opposition / Reply',
+  'License Agreement',
+  'Power of Attorney for IP'
 ];
 
 interface Client {

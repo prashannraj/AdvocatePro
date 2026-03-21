@@ -55,6 +55,12 @@ const CASE_TYPES = [
   { code: 'JV', name: 'Joint Venture (JV)', department: 'Corporate' },
   { code: 'CRG', name: 'Company Registration', department: 'Corporate' },
   { code: 'CD', name: 'Contract Drafting', department: 'Corporate' },
+  // IPR
+  { code: 'TM', name: 'Trademark Registration (ट्रेडमार्क दर्ता)', department: 'IPR' },
+  { code: 'PT', name: 'Patent Application (पेटेन्ट)', department: 'IPR' },
+  { code: 'CR', name: 'Copyright Registration (प्रतिलिपि अधिकार)', department: 'IPR' },
+  { code: 'DS', name: 'Design Registration (डिजाइन)', department: 'IPR' },
+  { code: 'IN', name: 'IP Infringement / Opposition (उजुरी / विरोध)', department: 'IPR' },
 ];
 
 export default function CasesPage() {

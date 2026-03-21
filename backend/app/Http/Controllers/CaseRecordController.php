@@ -20,7 +20,7 @@ class CaseRecordController extends Controller
         $validated = $request->validate([
             'case_number' => 'nullable|string|unique:case_records,case_number',
             'title' => 'required|string|max:255',
-            'department' => 'required|in:Litigation,Corporate,IPR,Other',
+            'department' => 'required|in:Litigation,Corporate,IPR,Other,Criminal,Civil',
             'description' => 'nullable|string',
             'client_id' => 'required|exists:clients,id',
             'lawyer_id' => 'required|exists:lawyers,id',

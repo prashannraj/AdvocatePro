@@ -33,6 +33,16 @@ class CaseRecord extends Model
         return $this->hasMany(ComplianceTask::class, 'case_id');
     }
 
+    public function ipAssets()
+    {
+        return $this->hasMany(IPAsset::class, 'case_id');
+    }
+
+    public function infringementActions()
+    {
+        return $this->hasMany(InfringementAction::class, 'case_id');
+    }
+
     public function hearings()
     {        return $this->hasMany(Hearing::class, 'case_id');
     }

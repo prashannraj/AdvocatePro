@@ -48,6 +48,7 @@ export default function Sidebar() {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'lawyer', 'staff'] },
     { name: 'Cases', href: '/cases', icon: Gavel, roles: ['admin', 'lawyer', 'staff'] },
     { name: 'Corporate', href: '/corporate', icon: Briefcase, roles: ['admin', 'lawyer', 'staff'] },
+    { name: 'IPR', href: '/ipr', icon: Shield, roles: ['admin', 'lawyer', 'staff'] },
     { name: 'Clients', href: '/clients', icon: Users, roles: ['admin', 'lawyer', 'staff'] },
     { name: 'Hearings', href: '/schedule', icon: Calendar, roles: ['admin', 'lawyer', 'staff'] },
     { name: 'Appointments', href: '/appointments', icon: Clock, roles: ['admin', 'lawyer', 'staff'] },
