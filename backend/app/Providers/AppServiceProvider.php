@@ -32,11 +32,8 @@ class AppServiceProvider extends ServiceProvider
             Config::set('mail.from.name', $settings->get('office_name'));
         }
 
-        if ($settings->has('email')) {
-            $email = $settings->get('email');
-            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                Config::set('mail.from.address', $email);
-            }
-        }
+        // We keep the from address as defined in .env (advocate@getappantech.com)
+        // to ensure SMTP authentication doesn't fail.
+        // If we want to allow replies to the office email, we should use Reply-To in Mailables.
     }
 }

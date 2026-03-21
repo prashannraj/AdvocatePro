@@ -85,10 +85,13 @@ class AuthController extends Controller
     protected function sendOtpEmail($user, $otp)
     {
         try {
+            Log::info("Attempting to send OTP email to: " . $user->email);
             $content = "Your <strong>Advocate Pro</strong> login OTP is: <h2 style='color: #4f46e5; margin: 10px 0;'>$otp</h2> It will expire in 2 minutes.";
             Mail::to($user->email)->send(new GeneralNotification($content, 'Login OTP - Advocate Pro'));
+            Log::info("OTP email sent successfully to: " . $user->email);
         } catch (\Exception $e) {
-            Log::error("Failed to send OTP email: " . $e->getMessage());
+            Log::error("Failed to send OTP email to {$user->email}: " . $e->getMessage());
+            Log::error($e->getTraceAsString());
         }
     }
 
