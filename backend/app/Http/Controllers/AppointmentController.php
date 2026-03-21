@@ -80,7 +80,7 @@ class AppointmentController extends Controller
             // Send to Client
             if ($clientUser && $clientUser->email) {
                 Mail::to($clientUser->email)->send(new GeneralNotification(
-                    "Dear {$clientUser->name},\n\nAn appointment has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team",
+                    "Dear {$clientUser->name},\n\nAn appointment has been {$type} for you with {$lawyerUser->name}.\n{$details}\n\nRegards,\nAdvocate Pro Team",
                     $subject
                 ));
             } else {
@@ -90,7 +90,7 @@ class AppointmentController extends Controller
             // Send to Lawyer
             if ($lawyerUser && $lawyerUser->email) {
                 Mail::to($lawyerUser->email)->send(new GeneralNotification(
-                    "Dear Advocate {$lawyerUser->name},\n\nAn appointment has been {$type} for you.\n{$details}\n\nRegards,\nAdvocate Pro Team",
+                    "Dear Advocate {$lawyerUser->name},\n\nAn appointment has been {$type} for you with {$clientUser->name}.\n{$details}\n\nRegards,\nAdvocate Pro Team",
                     $subject
                 ));
             } else {
