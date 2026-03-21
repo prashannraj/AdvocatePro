@@ -16,9 +16,14 @@ class Client extends Model
         'user_id', 'client_type', 'contact_person', 'phone', 'address'
     ];
 
-    public function cases()
+    public function caseRecords()
     {
         return $this->hasMany(CaseRecord::class);
+    }
+
+    public function companies()
+    {
+        return $this->hasMany(Company::class);
     }
 
     public function user()

@@ -26,10 +26,11 @@ interface Case {
   case_type_code: string;
   sequential_number: number;
   title: string;
+  department: 'Litigation' | 'Corporate' | 'IPR' | 'Other';
   description: string;
   client_id: number;
   lawyer_id: number;
-  court_id: number;
+  court_id: number | null;
   status: 'Open' | 'Pending' | 'Closed';
   filed_date: string;
   client?: { contact_person: string };
@@ -38,14 +39,22 @@ interface Case {
 }
 
 const CASE_TYPES = [
-  { code: 'WO', name: 'Writ Order (रिट निवेदन)' },
-  { code: 'WC', name: 'Writ Certiorari (प्रमाणीकरण रिट)' },
-  { code: 'WH', name: 'Writ Habeas Corpus (बन्दीप्रत्यक्षीकरण रिट)' },
-  { code: 'AP', name: 'Appeal (पुनरावेदन)' },
-  { code: 'RV', name: 'Review (पुनरावलोकन)' },
-  { code: 'CR', name: 'Criminal (फौजदारी)' },
-  { code: 'CI', name: 'Civil (देवानी)' },
-  { code: 'MS', name: 'Miscellaneous (विविध)' },
+  // Litigation
+  { code: 'WO', name: 'Writ Order (रिट निवेदन)', department: 'Litigation' },
+  { code: 'WC', name: 'Writ Certiorari (प्रमाणीकरण रिट)', department: 'Litigation' },
+  { code: 'WH', name: 'Writ Habeas Corpus (बन्दीप्रत्यक्षीकरण रिट)', department: 'Litigation' },
+  { code: 'AP', name: 'Appeal (पुनरावेदन)', department: 'Litigation' },
+  { code: 'RV', name: 'Review (पुनरावलोकन)', department: 'Litigation' },
+  { code: 'CR', name: 'Criminal (फौजदारी)', department: 'Litigation' },
+  { code: 'CI', name: 'Civil (देवानी)', department: 'Litigation' },
+  { code: 'MS', name: 'Miscellaneous (विविध)', department: 'Litigation' },
+  // Corporate
+  { code: 'CM', name: 'Corporate Matter (कर्पोरेट मामला)', department: 'Corporate' },
+  { code: 'FD', name: 'Foreign Direct Investment (FDI)', department: 'Corporate' },
+  { code: 'MA', name: 'Merger & Acquisition (M&A)', department: 'Corporate' },
+  { code: 'JV', name: 'Joint Venture (JV)', department: 'Corporate' },
+  { code: 'CRG', name: 'Company Registration', department: 'Corporate' },
+  { code: 'CD', name: 'Contract Drafting', department: 'Corporate' },
 ];
 
 export default function CasesPage() {
@@ -67,15 +76,16 @@ export default function CasesPage() {
   // Form states
   const [formData, setFormData] = useState({
     case_number: '',
-    bs_year: '080',
+    bs_year: '081',
     case_type_code: 'WO',
     title: '',
+    department: 'Litigation' as 'Litigation' | 'Corporate' | 'IPR' | 'Other',
     description: '',
     client_id: '',
     lawyer_id: '',
     court_id: '',
     status: 'Open' as 'Open' | 'Pending' | 'Closed',
-    filed_date: new Date().toISOString().split('T')[0],
+    filed_date: '',
   });
 
   useEffect(() => {
@@ -118,6 +128,7 @@ export default function CasesPage() {
       bs_year: currentYear,
       case_type_code: 'WO',
       title: '',
+      department: 'Litigation',
       description: '',
       client_id: '',
       lawyer_id: '',
@@ -135,10 +146,11 @@ export default function CasesPage() {
       bs_year: item.bs_year || '080',
       case_type_code: item.case_type_code || 'WO',
       title: item.title,
+      department: item.department || 'Litigation',
       description: item.description || '',
       client_id: item.client_id.toString(),
       lawyer_id: item.lawyer_id.toString(),
-      court_id: item.court_id.toString(),
+      court_id: item.court_id?.toString() || '',
       status: item.status,
       filed_date: item.filed_date,
     });
@@ -329,6 +341,24 @@ export default function CasesPage() {
                   <p className="mt-1 text-[9px] text-indigo-400 font-medium italic">Leave blank for automatic generation based on below fields.</p>
                 </div>
                 <div>
+                  <label className="block text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider">Department</label>
+                  <select
+                    required
+                    className="w-full px-3 py-2 bg-white border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold text-gray-900 transition-all"
+                    value={formData.department}
+                    onChange={(e) => {
+                      const dept = e.target.value as any;
+                      const firstType = CASE_TYPES.find(t => t.department === dept)?.code || 'WO';
+                      setFormData({...formData, department: dept, case_type_code: firstType});
+                    }}
+                  >
+                    <option value="Litigation">Litigation (मुद्दा मामला)</option>
+                    <option value="Corporate">Corporate (कर्पोरेट)</option>
+                    <option value="IPR">IPR (बौद्धिक सम्पत्ति)</option>
+                    <option value="Other">Other (अन्य)</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider">BS Year</label>
                   <input
                     type="text"
@@ -347,7 +377,7 @@ export default function CasesPage() {
                     value={formData.case_type_code}
                     onChange={(e) => setFormData({...formData, case_type_code: e.target.value})}
                   >
-                    {CASE_TYPES.map(type => (
+                    {CASE_TYPES.filter(t => t.department === formData.department).map(type => (
                       <option key={type.code} value={type.code}>{type.code} - {type.name}</option>
                     ))}
                   </select>
@@ -441,9 +471,8 @@ export default function CasesPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Target Court</label>
+                    <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase tracking-wider">Target Court (Optional)</label>
                     <select
-                      required
                       className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium transition-all"
                       value={formData.court_id}
                       onChange={(e) => setFormData({...formData, court_id: e.target.value})}

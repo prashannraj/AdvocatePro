@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [upcomingHearings, setUpcomingHearings] = useState<any[]>([]);
   const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
+  const [corporateMatters, setCorporateMatters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function DashboardPage() {
       setUpcomingHearings(response.data.upcomingHearings);
       setRecentDocuments(response.data.recentDocuments);
       setTodayAppointments(response.data.todayAppointments);
+      setCorporateMatters(response.data.corporateMatters || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -317,9 +319,57 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* Corporate Matters Section */}
+            <div className="mt-8">
+              <div className="bg-white p-7 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all print:border print:border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-black text-gray-900 uppercase tracking-tight text-sm flex items-center">
+                    <Briefcase className="h-5 w-5 mr-2 text-indigo-600 print:hidden" />
+                    Corporate Matters & Transactions
+                  </h3>
+                  <Link href="/corporate" className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-widest">Department</Link>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {corporateMatters.length > 0 ? corporateMatters.map((matter) => (
+                    <div key={matter.id} className="bg-gray-50 p-4 rounded-xl border border-transparent hover:border-indigo-100 transition-all group cursor-pointer" onClick={() => router.push(`/corporate/${matter.company_id || ''}`)}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 border border-gray-100 shadow-sm">
+                          <Building2 className="h-4 w-4" />
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${
+                          matter.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                        }`}>
+                          {matter.status}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-sm mb-1 group-hover:text-indigo-900">{matter.title}</h4>
+                      <p className="text-[10px] text-gray-500 font-medium mb-3">{matter.type} • {matter.company_name}</p>
+                      
+                      <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        <span>Deadline</span>
+                        <span className={matter.is_overdue ? 'text-rose-500' : ''}>{matter.deadline}</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="col-span-3 text-center py-10 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                      <Briefcase className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">No Active Corporate Matters</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </PrintLayout>
         </main>
       </div>
     </div>
   );
 }
+
+const Building2 = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+  </svg>
+);

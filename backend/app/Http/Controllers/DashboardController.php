@@ -12,6 +12,8 @@ use App\Models\Appointment;
 use App\Models\Attendance;
 use App\Models\Payroll;
 use App\Models\Court;
+use App\Models\ComplianceTask;
+use App\Models\CorporateTransaction;
 use Carbon\Carbon;
 use App\Helpers\NepaliDateHelper;
 
@@ -98,6 +100,24 @@ class DashboardController extends Controller
                 ];
             });
 
+        $corporateMatters = ComplianceTask::with(['company', 'caseRecord'])
+            ->where('completed', false)
+            ->orderBy('due_date', 'asc')
+            ->limit(6)
+            ->get()
+            ->map(function ($task) {
+                return [
+                    'id' => $task->id,
+                    'title' => $task->description,
+                    'type' => $task->caseRecord ? 'Case Task' : 'Compliance',
+                    'company_name' => $task->company ? $task->company->company_name : ($task->caseRecord ? $task->caseRecord->title : 'N/A'),
+                    'company_id' => $task->company_id,
+                    'status' => 'Pending',
+                    'deadline' => $task->due_date->format('M d, Y'),
+                    'is_overdue' => $task->due_date->isPast(),
+                ];
+            });
+
         return response()->json([
             'stats' => [
                 ['name' => 'Total Cases', 'value' => (string)$totalCases, 'icon' => 'Briefcase', 'color' => 'bg-blue-500'],
@@ -113,6 +133,7 @@ class DashboardController extends Controller
             'upcomingHearings' => $upcomingHearings,
             'recentDocuments' => $recentDocuments,
             'todayAppointments' => $todayAppointments,
+            'corporateMatters' => $corporateMatters,
         ]);
     }
 }

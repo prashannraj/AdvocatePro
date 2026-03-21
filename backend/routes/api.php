@@ -23,6 +23,10 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ActivityLogController;
 
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\LicenseKeyController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CorporateTransactionController;
+use App\Http\Controllers\ComplianceTaskController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -63,7 +67,14 @@ Route::middleware(['auth:sanctum', 'subscription'])->group(function () {
 
     Route::post('/settings', [SettingController::class, 'update']);
 
-    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    Route::apiResource('activity-logs', ActivityLogController::class);
+    Route::apiResource('subscriptions', SubscriptionController::class);
+    Route::apiResource('license-keys', LicenseKeyController::class);
+    
+    // Corporate Routes
+    Route::apiResource('companies', CompanyController::class);
+    Route::apiResource('corporate-transactions', CorporateTransactionController::class);
+    Route::apiResource('compliance-tasks', ComplianceTaskController::class);
 
     Route::get('/schedule', [ScheduleController::class, 'index']);
 });

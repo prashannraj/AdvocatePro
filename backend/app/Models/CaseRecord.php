@@ -18,10 +18,20 @@ class CaseRecord extends Model
 
     protected $fillable = [
         'case_number', 'bs_year', 'case_type_code', 'sequential_number',
-        'title', 'description', 'client_id', 
+        'title', 'department', 'description', 'client_id', 
         'lawyer_id', 'opposite_lawyer_name', 'status', 
         'court_id', 'filed_date', 'closed_date'
     ];
+
+    public function corporateTransactions()
+    {
+        return $this->hasMany(CorporateTransaction::class, 'case_id');
+    }
+
+    public function complianceTasks()
+    {
+        return $this->hasMany(ComplianceTask::class, 'case_id');
+    }
 
     public function hearings()
     {        return $this->hasMany(Hearing::class, 'case_id');
