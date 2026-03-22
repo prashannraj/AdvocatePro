@@ -3,8 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import Modal from '@/components/Modal';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import FormField, { inputClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import { 
   Plus,
   Loader2,
@@ -13,7 +18,9 @@ import {
   Edit,
   Lock,
   AlertTriangle,
-  Fingerprint
+  Fingerprint,
+  Shield,
+  Info
 } from 'lucide-react';
 
 interface Permission {
@@ -121,137 +128,126 @@ export default function PermissionsPage() {
 
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
-
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="Search permissions..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-          </div>
-          <button 
-            onClick={handleOpenCreateModal}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>New Permission</span>
-          </button>
-        </header>
-
-        <main className="p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Permissions</h2>
-            <p className="text-gray-500 text-sm">Manage system access levels and granular permissions.</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Permission Name</th>
-                  <th className="px-6 py-4">Slug</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {permissions.length > 0 ? (
-                  permissions.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <Fingerprint className="h-4 w-4 text-indigo-600" />
-                          <span className="font-bold text-gray-900 text-sm">{item.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-mono">{item.slug}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end space-x-2">
-                          <button 
-                            onClick={() => handleOpenEditModal(item)}
-                            className="p-1 hover:bg-indigo-50 rounded text-indigo-600 transition-colors"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleOpenDeleteModal(item)}
-                            className="p-1 hover:bg-red-50 rounded text-red-600 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="px-6 py-10 text-center text-gray-500 text-sm">
-                      No permissions found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </main>
+    <ResponsiveLayout user={user} title="Access Control">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">System Permissions</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Granular access controls for specific system functions.</p>
+        </div>
+        
+        <Button 
+          onClick={handleOpenCreateModal}
+          icon={Plus}
+          className="sm:w-auto w-full"
+        >
+          Create Permission
+        </Button>
       </div>
 
-      {/* Create/Edit Modal */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {permissions.map((item) => (
+          <Card key={item.id} className="group relative overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-primary border border-slate-100 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Fingerprint className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 leading-tight">{item.name}</h3>
+                  <Badge variant="outline" className="mt-1">
+                    {item.slug}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenEditModal(item)}
+                  className="text-slate-400 hover:text-primary"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenDeleteModal(item)}
+                  className="text-slate-400 hover:text-rose-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* New/Edit Permission Modal */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={editingPermission ? 'Edit Permission' : 'Add New Permission'}
+        title={editingPermission ? 'Edit System Permission' : 'Define New Permission'}
         loading={submitting}
+        fullScreenMobile
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Permission Name</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Create Case, Edit Users"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.name}
-              onChange={(e) => {
-                const name = e.target.value;
-                const slug = name.toLowerCase().replace(/\s+/g, '-');
-                setFormData({ ...formData, name, slug: editingPermission ? formData.slug : slug });
-              }}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. create-case, edit-users"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.slug}
-              onChange={(e) => setFormData({...formData, slug: e.target.value})}
-            />
-          </div>
-          <div className="pt-4 flex space-x-3">
-            <button
+        <form onSubmit={handleSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="Permission Detail" icon={Info}>
+            <div className="sm:col-span-2">
+              <FormField label="Action Name" required>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Delete Cases"
+                  className={inputClasses}
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                />
+              </FormField>
+            </div>
+
+            <div className="sm:col-span-2">
+              <FormField label="System Slug (Unique)" required>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. cases.delete"
+                  className={inputClasses}
+                  value={formData.slug}
+                  onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '.')})}
+                />
+              </FormField>
+            </div>
+          </FormSection>
+
+          {/* Action Buttons - Fixed at bottom on mobile */}
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm disabled:bg-indigo-400"
+              loading={submitting}
+              className="flex-[2] h-12"
             >
               {editingPermission ? 'Update Permission' : 'Create Permission'}
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -260,34 +256,36 @@ export default function PermissionsPage() {
       <Modal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)} 
-        title="Confirm Delete"
+        title="Revoke System Permission"
         loading={submitting}
       >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+        <div className="text-center py-4">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-rose-50 text-rose-600 mb-6 shadow-sm">
+            <AlertTriangle className="h-8 w-8" />
           </div>
-          <p className="text-sm text-gray-600 mb-6">
-            Are you sure you want to delete permission <span className="font-bold text-gray-900">{permissionToDelete?.name}</span>? This may affect role assignments.
+          <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight">Are you absolutely sure?</h4>
+          <p className="text-sm text-slate-500 mb-8 font-medium">
+            Deleting the permission <span className="font-black text-slate-900">{permissionToDelete?.name}</span> may disable certain app features for all users.
           </p>
           <div className="flex space-x-3">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm disabled:bg-red-400"
+              loading={submitting}
+              className="flex-1 h-12"
             >
-              Delete
-            </button>
+              Yes, Delete
+            </Button>
           </div>
         </div>
       </Modal>
-    </div>
+    </ResponsiveLayout>
   );
 }

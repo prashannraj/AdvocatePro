@@ -3,8 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api, { getNepaliDateNow } from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import { cn } from '@/lib/utils';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import Modal from '@/components/Modal';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import FormField, { inputClasses, selectClasses, textareaClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import NepaliDatePicker from '@/components/NepaliDatePicker';
 import { 
   Plus,
@@ -16,7 +22,11 @@ import {
   Calendar,
   AlertTriangle,
   Gavel,
-  Briefcase
+  Briefcase,
+  ChevronRight,
+  Info,
+  Scale,
+  FileText
 } from 'lucide-react';
 
 interface CaseRecord {
@@ -150,199 +160,201 @@ export default function SchedulePage() {
 
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
-
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="Search schedule..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-          </div>
-          <button 
-            onClick={handleOpenCreateModal}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Schedule Hearing</span>
-          </button>
-        </header>
-
-        <main className="p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Hearing Schedule</h2>
-            <p className="text-gray-500 text-sm">Track upcoming court dates and hearing status.</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Case Details</th>
-                  <th className="px-6 py-4">Hearing Date</th>
-                  <th className="px-6 py-4">Judge</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {hearings.length > 0 ? (
-                  hearings.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <p className="font-bold text-gray-900 text-sm">{item.case_record?.title || 'Unknown Case'}</p>
-                          <p className="text-xs text-indigo-600 font-medium">#{item.case_record?.case_number || 'N/A'}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-sm text-gray-900 font-medium">
-                          <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          {item.hearing_date}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Gavel className="h-4 w-4 mr-2 text-gray-400" />
-                          {item.judge_name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                          item.status === 'Completed' ? 'bg-green-100 text-green-700' : 
-                          item.status === 'Scheduled' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end space-x-2">
-                          <button 
-                            onClick={() => handleOpenEditModal(item)}
-                            className="p-1 hover:bg-indigo-50 rounded text-indigo-600 transition-colors"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleOpenDeleteModal(item)}
-                            className="p-1 hover:bg-red-50 rounded text-red-600 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500 text-sm">
-                      No hearings scheduled. Click "Schedule Hearing" to add one.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </main>
+    <ResponsiveLayout user={user} title="Court Schedule">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Hearings & Deadlines</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Track all upcoming court appearances and filing deadlines.</p>
+        </div>
+        
+        <Button 
+          onClick={handleOpenCreateModal}
+          icon={Plus}
+          className="sm:w-auto w-full"
+        >
+          Schedule Hearing
+        </Button>
       </div>
 
-      {/* Create/Edit Modal */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {hearings.map((hearing) => (
+          <Card key={hearing.id} className="group relative overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-primary border border-slate-100 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <Gavel className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 leading-tight">
+                    {hearing.case_record?.case_number}
+                  </h3>
+                  <Badge variant={
+                    hearing.status === 'Scheduled' ? 'info' :
+                    hearing.status === 'Completed' ? 'success' : 'warning'
+                  } className="mt-1">
+                    {hearing.status}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenEditModal(hearing)}
+                  className="text-slate-400 hover:text-primary"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenDeleteModal(hearing)}
+                  className="text-slate-400 hover:text-rose-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t border-slate-50">
+              <div className="flex items-center text-[11px] text-slate-600 font-bold uppercase tracking-wider">
+                <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                <span>{hearing.hearing_date}</span>
+              </div>
+              <div className="flex items-center text-[11px] text-slate-600 font-bold uppercase tracking-wider">
+                <Scale className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                <span>{hearing.judge_name || 'Not Assigned'}</span>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between">
+              <p className="text-[10px] text-slate-500 font-medium truncate max-w-[150px]">
+                {hearing.case_record?.title}
+              </p>
+              <button 
+                onClick={() => router.push(`/cases/${hearing.case_id}`)}
+                className="text-[10px] font-black text-primary hover:underline uppercase tracking-[0.15em] flex items-center"
+              >
+                View Case <ChevronRight className="h-3 w-3 ml-1" />
+              </button>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {hearings.length === 0 && (
+        <div className="py-20 text-center opacity-40 bg-white rounded-3xl border border-dashed border-slate-200">
+          <Calendar className="h-12 w-12 mx-auto mb-4" />
+          <p className="font-black uppercase tracking-[0.2em] text-xs">No hearings scheduled</p>
+        </div>
+      )}
+
+      {/* New/Edit Hearing Modal */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={editingHearing ? 'Edit Hearing' : 'Schedule New Hearing'}
+        title={editingHearing ? 'Update Hearing Record' : 'Schedule Court Appearance'}
         loading={submitting}
+        fullScreenMobile
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Case</label>
-            <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <select
-                required
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.case_id}
-                onChange={(e) => setFormData({...formData, case_id: e.target.value})}
-              >
-                <option value="">Select a case...</option>
-                {cases.map(c => (
-                  <option key={c.id} value={c.id}>{c.title} ({c.case_number})</option>
-                ))}
-              </select>
+        <form onSubmit={handleSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="Case Selection" icon={Info}>
+            <div className="sm:col-span-2">
+              <FormField label="Linked Case File" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={formData.case_id}
+                    onChange={(e) => setFormData({...formData, case_id: e.target.value})}
+                  >
+                    <option value="">Select a case...</option>
+                    {cases.map(c => <option key={c.id} value={c.id}>{c.case_number} - {c.title}</option>)}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
             </div>
-          </div>
+          </FormSection>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hearing Date</label>
-            <div className="relative">
+          <FormSection title="Hearing Details" icon={Gavel}>
+            <FormField label="Hearing Date (BS)" required>
               <NepaliDatePicker
                 value={formData.hearing_date}
                 onChange={(date) => setFormData({...formData, hearing_date: date})}
               />
+            </FormField>
+
+            <FormField label="Current Status" required>
+              <div className="relative">
+                <select
+                  className={selectClasses}
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                >
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="Adjourned">Adjourned</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+              </div>
+            </FormField>
+
+            <div className="sm:col-span-2">
+              <FormField label="Judge / Court Bench">
+                <input
+                  type="text"
+                  placeholder="e.g. Justice Ram Bahadur"
+                  className={inputClasses}
+                  value={formData.judge_name}
+                  onChange={(e) => setFormData({...formData, judge_name: e.target.value})}
+                />
+              </FormField>
             </div>
-          </div>
+          </FormSection>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Judge Name</label>
-            <div className="relative">
-              <Gavel className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                required
-                placeholder="e.g. Honorable John Doe"
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.judge_name}
-                onChange={(e) => setFormData({...formData, judge_name: e.target.value})}
-              />
+          <FormSection title="Additional Notes" icon={FileText}>
+            <div className="sm:col-span-2">
+              <FormField label="Procedural Notes">
+                <textarea
+                  className={cn(textareaClasses, "min-h-[120px]")}
+                  placeholder="Notes from previous hearing or objectives for this session..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                />
+              </FormField>
             </div>
-          </div>
+          </FormSection>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-            >
-              <option value="Scheduled">Scheduled</option>
-              <option value="Adjourned">Adjourned</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
-            <textarea
-              rows={3}
-              placeholder="Any specific instructions or notes for this hearing..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.notes}
-              onChange={(e) => setFormData({...formData, notes: e.target.value})}
-            />
-          </div>
-
-          <div className="pt-4 flex space-x-3">
-            <button
+          {/* Action Buttons - Fixed at bottom on mobile */}
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm disabled:bg-indigo-400"
+              loading={submitting}
+              className="flex-[2] h-12"
             >
-              {editingHearing ? 'Update Schedule' : 'Schedule Hearing'}
-            </button>
+              {editingHearing ? 'Update Schedule' : 'Confirm Schedule'}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -351,34 +363,36 @@ export default function SchedulePage() {
       <Modal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)} 
-        title="Confirm Delete"
+        title="Cancel Hearing"
         loading={submitting}
       >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+        <div className="text-center py-4">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-rose-50 text-rose-600 mb-6 shadow-sm">
+            <AlertTriangle className="h-8 w-8" />
           </div>
-          <p className="text-sm text-gray-600 mb-6">
-            Are you sure you want to delete the hearing schedule for <span className="font-bold text-gray-900">{hearingToDelete?.case_record?.title}</span>?
+          <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight">Remove from Schedule?</h4>
+          <p className="text-sm text-slate-500 mb-8 font-medium">
+            You are about to cancel the hearing for <span className="font-black text-slate-900">{hearingToDelete?.case_record?.case_number}</span>. This will remove it from all calendars.
           </p>
           <div className="flex space-x-3">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
-              Cancel
-            </button>
-            <button
+              No, Keep it
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm disabled:bg-red-400"
+              loading={submitting}
+              className="flex-1 h-12"
             >
-              Delete
-            </button>
+              Yes, Cancel it
+            </Button>
           </div>
         </div>
       </Modal>
-    </div>
+    </ResponsiveLayout>
   );
 }

@@ -3,11 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import FormField, { inputClasses, textareaClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import AlertModal from '@/components/AlertModal';
 import { 
   Loader2,
-  Save
+  Save,
+  Building2,
+  Mail,
+  Phone,
+  Smartphone,
+  MapPin,
+  Image as ImageIcon,
+  Stamp,
+  PenTool,
+  Info
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -117,98 +130,171 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading) {
+  if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
-      
-      {/* Custom Alert Modal */}
-      <AlertModal 
+    <ResponsiveLayout user={user} title="Global Settings">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Firm Configuration</h1>
+            <p className="text-slate-500 font-medium text-sm mt-1">Configure your office profile, letterhead branding, and contact details.</p>
+          </div>
+          
+          <Button 
+            onClick={handleSave}
+            loading={isSaving}
+            icon={Save}
+            className="sm:w-auto w-full"
+          >
+            Save Changes
+          </Button>
+        </div>
+
+        <div className="space-y-8 pb-24 sm:pb-8">
+          <FormSection title="Office Identity" icon={Building2} variant="elevated">
+            <div className="sm:col-span-2">
+              <FormField label="Full Office Name" required>
+                <input
+                  type="text"
+                  name="office_name"
+                  className={inputClasses}
+                  value={settings.office_name}
+                  onChange={handleInputChange}
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Primary Email">
+              <input
+                type="email"
+                name="email"
+                className={inputClasses}
+                value={settings.email}
+                onChange={handleInputChange}
+              />
+            </FormField>
+
+            <FormField label="Landline Phone">
+              <input
+                type="text"
+                name="phone"
+                className={inputClasses}
+                value={settings.phone}
+                onChange={handleInputChange}
+              />
+            </FormField>
+
+            <FormField label="Mobile Number">
+              <input
+                type="text"
+                name="mobile"
+                className={inputClasses}
+                value={settings.mobile}
+                onChange={handleInputChange}
+              />
+            </FormField>
+
+            <div className="sm:col-span-2">
+              <FormField label="Physical Address" required>
+                <textarea
+                  name="address"
+                  rows={2}
+                  className={textareaClasses}
+                  value={settings.address}
+                  onChange={handleInputChange}
+                />
+              </FormField>
+            </div>
+          </FormSection>
+
+          <FormSection title="Letterhead Branding" icon={PenTool} variant="elevated">
+            <div className="sm:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Logo Upload */}
+              <div className="space-y-3">
+                <FormField label="Firm Logo">
+                  <div className="relative group aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 transition-all hover:border-primary/30">
+                    {settings.logo ? (
+                      <img src={settings.logo} alt="Logo" className="w-full h-full object-contain p-4" />
+                    ) : (
+                      <ImageIcon className="h-8 w-8 text-slate-300" />
+                    )}
+                    <input
+                      type="file"
+                      name="logo"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                    />
+                  </div>
+                </FormField>
+                <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest">Transparent PNG Recommended</p>
+              </div>
+
+              {/* Stamp Upload */}
+              <div className="space-y-3">
+                <FormField label="Office Stamp">
+                  <div className="relative group aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 transition-all hover:border-primary/30">
+                    {settings.stamp ? (
+                      <img src={settings.stamp} alt="Stamp" className="w-full h-full object-contain p-4" />
+                    ) : (
+                      <Stamp className="h-8 w-8 text-slate-300" />
+                    )}
+                    <input
+                      type="file"
+                      name="stamp"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                    />
+                  </div>
+                </FormField>
+                <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest">Round/Rectangular Stamp</p>
+              </div>
+
+              {/* Signature Upload */}
+              <div className="space-y-3">
+                <FormField label="Authorized Signature">
+                  <div className="relative group aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50 transition-all hover:border-primary/30">
+                    {settings.authorize_signature ? (
+                      <img src={settings.authorize_signature} alt="Signature" className="w-full h-full object-contain p-4" />
+                    ) : (
+                      <PenTool className="h-8 w-8 text-slate-300" />
+                    )}
+                    <input
+                      type="file"
+                      name="authorize_signature"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleFileChange}
+                      accept="image/*"
+                    />
+                  </div>
+                </FormField>
+                <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest">Clear Digital Signature</p>
+              </div>
+            </div>
+          </FormSection>
+        </div>
+      </div>
+
+      <AlertModal
         isOpen={alertConfig.isOpen}
         onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
         title={alertConfig.title}
         message={alertConfig.message}
         type={alertConfig.type}
       />
-
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-          <h1 className="text-xl font-bold text-gray-800">Office Settings</h1>
-          <button 
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm disabled:bg-indigo-400"
-          >
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
-          </button>
-        </header>
-
-        <main className="p-8">
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="office_name" className="block text-sm font-medium text-gray-700">Office Name</label>
-                    <input type="text" name="office_name" id="office_name" value={settings.office_name || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" name="email" id="email" value={settings.email || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                    <input type="text" name="phone" id="phone" value={settings.phone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">Mobile</label>
-                    <input type="text" name="mobile" id="mobile" value={settings.mobile || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                  </div>
-                  <div>
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
-                    <textarea name="address" id="address" value={settings.address || ''} onChange={handleInputChange} rows={3} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Branding</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    {settings.logo && <img src={settings.logo} alt="Logo" className="h-16 w-16 object-contain rounded-md bg-gray-100"/>}
-                    <div>
-                      <label htmlFor="logo" className="block text-sm font-medium text-gray-700">Logo</label>
-                      <input type="file" name="logo" id="logo" onChange={handleFileChange} className="mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    {settings.stamp && <img src={settings.stamp} alt="Stamp" className="h-16 w-16 object-contain rounded-md bg-gray-100"/>}
-                    <div>
-                      <label htmlFor="stamp" className="block text-sm font-medium text-gray-700">Stamp</label>
-                      <input type="file" name="stamp" id="stamp" onChange={handleFileChange} className="mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    {settings.authorize_signature && <img src={settings.authorize_signature} alt="Signature" className="h-16 w-16 object-contain rounded-md bg-gray-100"/>}
-                    <div>
-                      <label htmlFor="authorize_signature" className="block text-sm font-medium text-gray-700">Authorized Signature</label>
-                      <input type="file" name="authorize_signature" id="authorize_signature" onChange={handleFileChange} className="mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+    </ResponsiveLayout>
   );
 }

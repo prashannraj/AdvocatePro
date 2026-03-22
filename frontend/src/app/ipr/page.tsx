@@ -3,23 +3,33 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
+import Card, { CardHeader, CardTitle, CardContent } from '@/components/Card';
+import Badge from '@/components/Badge';
+import { cn } from '@/lib/utils';
+import Button from '@/components/Button';
+import Modal from '@/components/Modal';
+import FormField, { inputClasses, selectClasses, textareaClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import { 
   Shield, 
   Plus, 
-  Search, 
-  Filter, 
   FileText, 
   AlertTriangle, 
   Clock, 
   CheckCircle2,
-  ExternalLink,
   Calendar,
-  Eye,
   MoreVertical,
   ChevronRight,
   TrendingUp,
-  Fingerprint
+  Fingerprint,
+  Trash2,
+  LayoutGrid,
+  Search,
+  Zap,
+  Info,
+  User,
+  Activity
 } from 'lucide-react';
 
 interface IPAsset {
@@ -42,20 +52,45 @@ interface IPWatch {
 
 export default function IPRPage() {
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const [assets, setAssets] = useState<IPAsset[]>([]);
   const [watches, setWatches] = useState<IPWatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'assets' | 'watch' | 'renewals'>('assets');
+  const [clients, setClients] = useState<any[]>([]);
+
+  // Modal states
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [isWatchModalOpen, setIsWatchModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form states
+  const [assetForm, setAssetForm] = useState({
+    type: 'Trademark',
+    asset_name: '',
+    application_number: '',
+    registration_number: '',
+    status: 'Filed',
+    renewal_date: '',
+    client_id: '',
+  });
+
+  const [watchForm, setWatchForm] = useState({
+    monitored_term: '',
+  });
 
   useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) setUser(JSON.parse(userStr));
     fetchData();
+    fetchSupportData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (search = '') => {
     try {
       setLoading(true);
       const [assetRes, watchRes] = await Promise.all([
-        api.get('/ip-assets'),
+        api.get(`/ip-assets?search=${search}`),
         api.get('/ip-watches')
       ]);
       setAssets(assetRes.data);
@@ -67,237 +102,430 @@ export default function IPRPage() {
     }
   };
 
+  const fetchSupportData = async () => {
+    try {
+      const res = await api.get('/clients');
+      setClients(res.data);
+    } catch (error) {
+      console.error('Failed to fetch support data:', error);
+    }
+  };
+
+  const handleAssetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await api.post('/ip-assets', assetForm);
+      setIsAssetModalOpen(false);
+      fetchData();
+      setAssetForm({ type: 'Trademark', asset_name: '', application_number: '', registration_number: '', status: 'Filed', renewal_date: '', client_id: '' });
+    } catch (error) {
+      console.error('Failed to save asset:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWatchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await api.post('/ip-watches', watchForm);
+      setIsWatchModalOpen(false);
+      fetchData();
+      setWatchForm({ monitored_term: '' });
+    } catch (error) {
+      console.error('Failed to save watch:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const expiringAssets = assets.filter(a => {
     if (!a.renewal_date) return false;
     const diff = new Date(a.renewal_date).getTime() - new Date().getTime();
-    return diff > 0 && diff < 90 * 24 * 60 * 60 * 1000; // Next 90 days
+    return diff > 0 && diff < 90 * 24 * 60 * 60 * 1000;
   });
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      
-      <div className="flex-1">
-        <header className="bg-white border-b border-gray-100 p-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="flex items-center space-x-2 text-indigo-600 mb-1">
-                <Shield className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Intellectual Property (IPR)</span>
-              </div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight">IPR Department</h1>
-              <p className="text-gray-500 font-medium mt-1">Manage trademarks, patents, and monitor IP infringements.</p>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button 
-                onClick={() => router.push('/cases?department=IPR')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-100 flex items-center space-x-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>New IPR Case</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="flex space-x-8 mt-8 border-b border-gray-100">
-            <button 
-              onClick={() => setActiveTab('assets')}
-              className={`pb-4 text-xs font-bold uppercase tracking-widest transition-all relative ${
-                activeTab === 'assets' ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
+    <ResponsiveLayout 
+      user={user} 
+      title="IPR Department"
+      onSearch={(q) => fetchData(q)}
+    >
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">IP Portfolio</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Manage trademarks, patents, and intellectual assets.</p>
+        </div>
+        
+        <div className="flex items-center space-x-2 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
+          {[
+            { id: 'assets', label: 'Portfolio', icon: LayoutGrid },
+            { id: 'renewals', label: 'Renewals', icon: Calendar, count: expiringAssets.length },
+            { id: 'watch', label: 'Watch Service', icon: Zap }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-primary/30'
               }`}
             >
-              IP Portfolio ({assets.length})
-              {activeTab === 'assets' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />}
+              <tab.icon className="h-3.5 w-3.5" />
+              <span>{tab.label}</span>
+              {tab.count ? (
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[8px] ${activeTab === tab.id ? 'bg-white text-primary' : 'bg-rose-500 text-white'}`}>
+                  {tab.count}
+                </span>
+              ) : null}
             </button>
-            <button 
-              onClick={() => setActiveTab('renewals')}
-              className={`pb-4 text-xs font-bold uppercase tracking-widest transition-all relative ${
-                activeTab === 'renewals' ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              Renewals Due
-              {expiringAssets.length > 0 && <span className="ml-2 px-1.5 py-0.5 bg-rose-500 text-white text-[8px] rounded-full">{expiringAssets.length}</span>}
-              {activeTab === 'renewals' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />}
-            </button>
-            <button 
-              onClick={() => setActiveTab('watch')}
-              className={`pb-4 text-xs font-bold uppercase tracking-widest transition-all relative ${
-                activeTab === 'watch' ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              IP Watch Service
-              {activeTab === 'watch' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />}
-            </button>
-          </div>
-        </header>
+          ))}
+        </div>
+      </div>
 
-        <main className="p-8">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : activeTab === 'assets' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {assets.map((asset) => (
-                <div key={asset.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                      asset.type === 'Trademark' ? 'bg-blue-50 text-blue-600' :
-                      asset.type === 'Patent' ? 'bg-amber-50 text-amber-600' :
-                      asset.type === 'Copyright' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
-                    }`}>
-                      <Fingerprint className="h-5 w-5" />
-                    </div>
-                    <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest ${
-                      asset.status === 'Registered' ? 'bg-emerald-50 text-emerald-600' :
-                      asset.status === 'Filed' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
-                    }`}>
-                      {asset.status}
-                    </span>
-                  </div>
-                  
-                  <h3 className="font-black text-gray-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors">
-                    {asset.asset_name}
-                  </h3>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
-                    {asset.type} • {asset.client?.contact_person}
-                  </p>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center text-xs text-gray-500">
-                      <FileText className="h-3.5 w-3.5 mr-2 text-gray-400" />
-                      <span className="font-bold">App No:</span>
-                      <span className="ml-1">{asset.application_number || 'Pending'}</span>
-                    </div>
-                    {asset.renewal_date && (
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Calendar className="h-3.5 w-3.5 mr-2 text-indigo-400" />
-                        <span className="font-bold">Renewal:</span>
-                        <span className="ml-1">{new Date(asset.renewal_date).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                    <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline flex items-center">
-                      View Asset <ChevronRight className="h-3 w-3 ml-1" />
-                    </button>
-                    <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </div>
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : activeTab === 'assets' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {assets.map((asset) => (
+            <Card key={asset.id} className="group">
+              <div className="flex justify-between items-start mb-4">
+                <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+                  asset.type === 'Trademark' ? 'bg-blue-50 text-blue-600' :
+                  asset.type === 'Patent' ? 'bg-amber-50 text-amber-600' :
+                  asset.type === 'Copyright' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
+                }`}>
+                  <Fingerprint className="h-6 w-6" />
                 </div>
-              ))}
-            </div>
-          ) : activeTab === 'renewals' ? (
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Expiring IP Registrations</h2>
-                <span className="text-[10px] font-bold text-rose-500 uppercase">Action Required</span>
-              </div>
-              <table className="w-full text-left">
-                <thead className="bg-gray-50/50">
-                  <tr className="text-gray-400 text-[10px] font-black uppercase tracking-widest border-b border-gray-100">
-                    <th className="px-6 py-4">Asset Name</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Client</th>
-                    <th className="px-6 py-4">Renewal Date</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {expiringAssets.map(asset => (
-                    <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-gray-900">{asset.asset_name}</span>
-                        <p className="text-[10px] text-gray-400 font-mono">#{asset.registration_number}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-0.5 rounded bg-gray-100 text-[9px] font-black uppercase">{asset.type}</span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{asset.client?.contact_person}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-rose-600">
-                          <Clock className="h-3.5 w-3.5 mr-2" />
-                          <span className="text-sm font-black">{new Date(asset.renewal_date).toLocaleDateString()}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm">
-                          Start Renewal
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {expiringAssets.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-20 text-center">
-                        <div className="max-w-xs mx-auto">
-                          <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto mb-4" />
-                          <h4 className="font-black text-gray-900 uppercase tracking-tight">All clear</h4>
-                          <p className="text-xs text-gray-500 font-medium mt-1">No IP assets are due for renewal in the next 90 days.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                  <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                    <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest">Active Watch Monitors</h2>
-                    <button className="text-indigo-600 hover:text-indigo-700 text-[10px] font-black uppercase tracking-widest">Add Term</button>
-                  </div>
-                  <div className="divide-y divide-gray-50">
-                    {watches.map(watch => (
-                      <div key={watch.id} className="p-6 hover:bg-gray-50 transition-all group">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-lg font-black text-gray-900 group-hover:text-indigo-600 transition-colors">"{watch.monitored_term}"</h4>
-                          <div className="flex items-center space-x-2">
-                            {watch.new_matches_count > 0 && (
-                              <span className="bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
-                                {watch.new_matches_count} Alerts
-                              </span>
-                            )}
-                            <button className="p-1.5 text-gray-400 hover:text-rose-500 transition-colors">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          <TrendingUp className="h-3 w-3 mr-1 text-indigo-500" />
-                          Last Scan: {watch.last_checked_date ? new Date(watch.last_checked_date).toLocaleDateString() : 'Never'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <Badge 
+                  variant={asset.status === 'Registered' ? 'success' : asset.status === 'Filed' ? 'info' : 'warning'}
+                >
+                  {asset.status}
+                </Badge>
               </div>
               
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white shadow-lg shadow-indigo-100">
-                  <AlertTriangle className="h-8 w-8 mb-4 text-indigo-200" />
-                  <h3 className="text-lg font-black leading-tight mb-2 uppercase tracking-tight">IP Watch Alerts</h3>
-                  <p className="text-indigo-100 text-xs font-medium mb-6 opacity-90">We've detected 3 new trademark applications that may infringe on your client's registered marks.</p>
-                  <button className="w-full py-3 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-md">
-                    Review Matches
-                  </button>
+              <h3 className="font-black text-slate-900 text-lg mb-1 group-hover:text-primary transition-colors leading-tight">
+                {asset.asset_name}
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-6">
+                {asset.type} • {asset.client?.contact_person}
+              </p>
+
+              <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-slate-400">App No.</span>
+                  <span className="text-slate-900 font-mono">{asset.application_number || 'Pending'}</span>
                 </div>
+                {asset.renewal_date && (
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
+                    <span className="text-slate-400">Renewal</span>
+                    <span className="text-primary">{new Date(asset.renewal_date).toLocaleDateString()}</span>
+                  </div>
+                )}
               </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-primary h-8"
+                  onClick={() => router.push(`/ipr/${asset.id}`)}
+                >
+                  View Details <ChevronRight className="h-3 w-3 ml-1" />
+                </Button>
+                <Button variant="ghost" size="icon" className="text-slate-400">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+          <button 
+            onClick={() => setIsAssetModalOpen(true)}
+            className="bg-slate-50 rounded-2xl p-6 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:border-primary/30 hover:text-primary transition-all min-h-[240px] group"
+          >
+            <div className="h-12 w-12 rounded-full bg-white border border-slate-200 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <Plus className="h-6 w-6" />
             </div>
-          )}
-        </main>
-      </div>
-    </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Register New IP</span>
+          </button>
+        </div>
+      ) : activeTab === 'renewals' ? (
+        <Card className="p-0 overflow-hidden border-slate-100">
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <CardTitle icon={Calendar}>Renewal Pipeline</CardTitle>
+            <Badge variant="destructive">Action Required</Badge>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50">
+                <tr className="text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                  <th className="px-6 py-4">Asset</th>
+                  <th className="px-6 py-4">Client</th>
+                  <th className="px-6 py-4">Renewal Date</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {expiringAssets.map(asset => (
+                  <tr key={asset.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-8 w-8 bg-primary/5 rounded-lg flex items-center justify-center text-primary">
+                          <Fingerprint size={16} />
+                        </div>
+                        <div>
+                          <span className="text-sm font-bold text-slate-900">{asset.asset_name}</span>
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{asset.type} • #{asset.registration_number}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-widest">{asset.client?.contact_person}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center text-rose-600 font-black text-xs uppercase tracking-widest">
+                        <Clock className="h-3 w-3 mr-1.5" />
+                        {new Date(asset.renewal_date).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button size="sm" className="h-8 text-[9px]">Start Renewal</Button>
+                    </td>
+                  </tr>
+                ))}
+                {expiringAssets.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-20 text-center">
+                      <div className="max-w-xs mx-auto opacity-40">
+                        <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">All IP assets are current</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="p-0 overflow-hidden border-slate-100">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                <CardTitle icon={Zap}>Monitored Terms</CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  icon={Plus} 
+                  className="h-8 text-[9px]"
+                  onClick={() => setIsWatchModalOpen(true)}
+                >
+                  Add Term
+                </Button>
+              </div>
+              <div className="divide-y divide-slate-50">
+                {watches.map(watch => (
+                  <div key={watch.id} className="p-6 hover:bg-slate-50 transition-all group">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-lg font-black text-slate-900 group-hover:text-primary transition-colors">"{watch.monitored_term}"</h4>
+                      <div className="flex items-center space-x-2">
+                        {watch.new_matches_count > 0 && (
+                          <Badge variant="destructive">{watch.new_matches_count} Alerts</Badge>
+                        )}
+                        <Button variant="ghost" size="icon" className="text-slate-300 hover:text-rose-500 h-8 w-8">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <TrendingUp className="h-3 w-3 mr-1.5 text-primary" />
+                      Last Scan: {watch.last_checked_date ? new Date(watch.last_checked_date).toLocaleDateString() : 'Never'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-indigo-600 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl shadow-primary/20 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              <AlertTriangle className="h-10 w-10 mb-6 text-indigo-200" />
+              <h3 className="text-xl font-black leading-tight mb-3 uppercase tracking-tight">IP Watch Alerts</h3>
+              <p className="text-indigo-100 text-xs font-medium mb-8 opacity-80 leading-relaxed">We've detected new trademark applications that may conflict with your clients' portfolio.</p>
+              <Button variant="outline" className="w-full bg-white/10 border-white/20 text-white hover:bg-white hover:text-primary h-12">
+                Review Matches
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New IP Asset Modal */}
+      <Modal
+        isOpen={isAssetModalOpen}
+        onClose={() => setIsAssetModalOpen(false)}
+        title="Register New IP Asset"
+        loading={submitting}
+        fullScreenMobile
+      >
+        <form onSubmit={handleAssetSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="Asset Classification" icon={Info}>
+            <FormField label="Asset Type" required>
+              <div className="relative">
+                <select
+                  className={selectClasses}
+                  value={assetForm.type}
+                  onChange={(e) => setAssetForm({...assetForm, type: e.target.value})}
+                >
+                  <option value="Trademark">Trademark</option>
+                  <option value="Patent">Patent</option>
+                  <option value="Copyright">Copyright</option>
+                  <option value="Design">Design</option>
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+              </div>
+            </FormField>
+
+            <FormField label="Asset Name" required>
+              <input
+                type="text"
+                required
+                className={inputClasses}
+                placeholder="e.g. Brand Name or Invention Title"
+                value={assetForm.asset_name}
+                onChange={(e) => setAssetForm({...assetForm, asset_name: e.target.value})}
+              />
+            </FormField>
+          </FormSection>
+
+          <FormSection title="Registration Details" icon={Activity}>
+            <FormField label="Application Number">
+              <input
+                type="text"
+                className={inputClasses}
+                value={assetForm.application_number}
+                onChange={(e) => setAssetForm({...assetForm, application_number: e.target.value})}
+              />
+            </FormField>
+
+            <FormField label="Registration Number">
+              <input
+                type="text"
+                className={inputClasses}
+                value={assetForm.registration_number}
+                onChange={(e) => setAssetForm({...assetForm, registration_number: e.target.value})}
+              />
+            </FormField>
+
+            <FormField label="Current Status" required>
+              <div className="relative">
+                <select
+                  className={selectClasses}
+                  value={assetForm.status}
+                  onChange={(e) => setAssetForm({...assetForm, status: e.target.value})}
+                >
+                  <option value="Filed">Filed</option>
+                  <option value="Published">Published</option>
+                  <option value="Registered">Registered</option>
+                  <option value="Renewed">Renewed</option>
+                  <option value="Expired">Expired</option>
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+              </div>
+            </FormField>
+
+            <FormField label="Renewal Date">
+              <input
+                type="date"
+                className={inputClasses}
+                value={assetForm.renewal_date}
+                onChange={(e) => setAssetForm({...assetForm, renewal_date: e.target.value})}
+              />
+            </FormField>
+          </FormSection>
+
+          <FormSection title="Ownership" icon={User}>
+            <div className="sm:col-span-2">
+              <FormField label="Assign to Client" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={assetForm.client_id}
+                    onChange={(e) => setAssetForm({...assetForm, client_id: e.target.value})}
+                  >
+                    <option value="">Select Client...</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.contact_person}</option>)}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
+            </div>
+          </FormSection>
+
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button type="button" variant="outline" className="flex-1 h-12" onClick={() => setIsAssetModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={submitting} className="flex-[2] h-12">
+              Register Asset
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* New IP Watch Modal */}
+      <Modal
+        isOpen={isWatchModalOpen}
+        onClose={() => setIsWatchModalOpen(false)}
+        title="Add IP Watch Term"
+        loading={submitting}
+        fullScreenMobile
+      >
+        <form onSubmit={handleWatchSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="Monitoring Criteria" icon={Zap}>
+            <div className="sm:col-span-2">
+              <FormField label="Term to Monitor" required>
+                <input
+                  type="text"
+                  required
+                  className={inputClasses}
+                  placeholder="e.g. Trademark Name, Logo Text"
+                  value={watchForm.monitored_term}
+                  onChange={(e) => setWatchForm({...watchForm, monitored_term: e.target.value})}
+                />
+              </FormField>
+              <p className="mt-2 text-[10px] text-slate-400 font-medium">
+                Our system will scan new gazettes and trademark journals for phonetically or visually similar applications.
+              </p>
+            </div>
+          </FormSection>
+
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button type="button" variant="outline" className="flex-1 h-12" onClick={() => setIsWatchModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={submitting} className="flex-[2] h-12">
+              Start Monitoring
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Mobile FAB */}
+      <button 
+        onClick={() => {
+          if (activeTab === 'assets') setIsAssetModalOpen(true);
+          else if (activeTab === 'watch') setIsWatchModalOpen(true);
+        }}
+        className="md:hidden fixed bottom-24 right-6 h-14 w-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center z-40 active:scale-90 transition-transform"
+      >
+        <Plus className="h-7 w-7" />
+      </button>
+    </ResponsiveLayout>
   );
 }
-
-const Trash2 = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-  </svg>
-);

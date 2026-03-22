@@ -3,8 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api, { getNepaliDateNow } from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import Modal from '@/components/Modal';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import FormField, { inputClasses, selectClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import NepaliDatePicker from '@/components/NepaliDatePicker';
 import { 
   Plus,
@@ -16,7 +21,10 @@ import {
   Banknote,
   AlertTriangle,
   User as UserIcon,
-  Calendar
+  Calendar,
+  ChevronRight,
+  Info,
+  DollarSign
 } from 'lucide-react';
 
 interface User {
@@ -83,11 +91,11 @@ export default function PayrollPage() {
     setFormData(prev => ({ ...prev, net_salary: net }));
   }, [formData.base_salary, formData.allowances, formData.deductions]);
 
-  const fetchData = async () => {
+  const fetchData = async (search = '') => {
     setLoading(true);
     try {
       const [payrollRes, usersRes] = await Promise.all([
-        api.get('/payroll'),
+        api.get(`/payroll?search=${search}`),
         api.get('/users')
       ]);
       setPayroll(Array.isArray(payrollRes.data) ? payrollRes.data : []);
@@ -118,9 +126,9 @@ export default function PayrollPage() {
     setEditingRecord(record);
     setFormData({
       user_id: record.user_id.toString(),
-      base_salary: record.base_salary.toString(),
-      allowances: record.allowances.toString(),
-      deductions: record.deductions.toString(),
+      base_salary: record.base_salary,
+      allowances: record.allowances,
+      deductions: record.deductions,
       net_salary: record.net_salary,
       payment_date: record.payment_date,
       status: record.status,
@@ -137,17 +145,10 @@ export default function PayrollPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = {
-        ...formData,
-        base_salary: parseFloat(formData.base_salary) || 0,
-        allowances: parseFloat(formData.allowances) || 0,
-        deductions: parseFloat(formData.deductions) || 0,
-      };
-
       if (editingRecord) {
-        await api.put(`/payroll/${editingRecord.id}`, payload);
+        await api.put(`/payroll/${editingRecord.id}`, formData);
       } else {
-        await api.post('/payroll', payload);
+        await api.post('/payroll', formData);
       }
       setIsModalOpen(false);
       fetchData();
@@ -176,225 +177,210 @@ export default function PayrollPage() {
 
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
+    <ResponsiveLayout 
+      user={user} 
+      title="Firm Payroll"
+      onSearch={(q) => fetchData(q)}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Staff Payroll</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Manage salaries, allowances, and payment status.</p>
+        </div>
+        
+        <Button 
+          onClick={handleOpenCreateModal}
+          icon={Plus}
+          className="sm:w-auto w-full"
+        >
+          Generate Payroll
+        </Button>
+      </div>
 
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="Search payroll..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-          </div>
-          <button 
-            onClick={handleOpenCreateModal}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Process Payroll</span>
-          </button>
-        </header>
-
-        <main className="p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Payroll Management</h2>
-            <p className="text-gray-500 text-sm">Manage staff salaries, allowances, and payments.</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Employee</th>
-                  <th className="px-6 py-4">Payment Date</th>
-                  <th className="px-6 py-4">Net Salary</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+              <th className="px-6 py-4">Employee</th>
+              <th className="px-6 py-4">Net Salary</th>
+              <th className="px-6 py-4">Payment Date</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {payroll.length > 0 ? (
+              payroll.map((item) => (
+                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-black text-sm uppercase group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        {(item.user?.name || 'E').charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{item.user?.name || 'Unknown Employee'}</p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base: Rs. {item.base_salary}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 font-black text-slate-900 text-sm">Rs. {item.net_salary}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-600">{item.payment_date}</td>
+                  <td className="px-6 py-4">
+                    <Badge variant={item.status === 'Paid' ? 'success' : 'warning'}>
+                      {item.status}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleOpenEditModal(item)}
+                        className="text-slate-400 hover:text-primary"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleOpenDeleteModal(item)}
+                        className="text-slate-400 hover:text-rose-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {payroll.length > 0 ? (
-                  payroll.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
-                            {(item.user?.name || 'E').charAt(0)}
-                          </div>
-                          <p className="font-bold text-gray-900 text-sm">{item.user?.name || 'Unknown Employee'}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{item.payment_date}</td>
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-gray-900">NPR {item.net_salary.toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                          item.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end space-x-2">
-                          <button 
-                            onClick={() => handleOpenEditModal(item)}
-                            className="p-1 hover:bg-indigo-50 rounded text-indigo-600 transition-colors"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleOpenDeleteModal(item)}
-                            className="p-1 hover:bg-red-50 rounded text-red-600 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500 text-sm">
-                      No payroll records found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </main>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-20 text-center opacity-40">
+                  <Banknote className="h-12 w-12 mx-auto mb-4" />
+                  <p className="font-black uppercase tracking-[0.2em] text-xs">No payroll records found</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Create/Edit Modal */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={editingRecord ? 'Edit Payroll Record' : 'Process New Payroll'}
+        title={editingRecord ? 'Edit Payroll Record' : 'Generate New Payroll'}
         loading={submitting}
+        fullScreenMobile
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Employee</label>
-            <div className="relative">
-              <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <select
+        <form onSubmit={handleSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="Employee Selection" icon={Info}>
+            <div className="sm:col-span-2">
+              <FormField label="Select Employee" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={formData.user_id}
+                    onChange={(e) => setFormData({...formData, user_id: e.target.value})}
+                  >
+                    <option value="">Select an employee...</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
+            </div>
+          </FormSection>
+
+          <FormSection title="Salary Breakdown" icon={DollarSign}>
+            <FormField label="Base Salary (Rs.)" required>
+              <input
+                type="number"
                 required
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                value={formData.user_id}
-                onChange={(e) => setFormData({...formData, user_id: e.target.value})}
-              >
-                <option value="">Select an employee...</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                ))}
-              </select>
-            </div>
-          </div>
+                className={inputClasses}
+                value={formData.base_salary}
+                onChange={(e) => setFormData({...formData, base_salary: e.target.value})}
+              />
+            </FormField>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Base Salary</label>
-              <div className="relative">
-                <Banknote className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                  value={formData.base_salary}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Remove leading zeros if there are other digits
-                    const sanitized = val.length > 1 && val.startsWith('0') ? val.replace(/^0+/, '') : val;
-                    setFormData({...formData, base_salary: sanitized});
-                  }}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Date</label>
-              <div className="relative">
-                <NepaliDatePicker
-                  value={formData.payment_date}
-                  onChange={(date) => setFormData({...formData, payment_date: date})}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Allowances</label>
+            <FormField label="Allowances (Rs.)">
               <input
                 type="number"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className={inputClasses}
                 value={formData.allowances}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const sanitized = val.length > 1 && val.startsWith('0') ? val.replace(/^0+/, '') : val;
-                  setFormData({...formData, allowances: sanitized});
-                }}
+                onChange={(e) => setFormData({...formData, allowances: e.target.value})}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Deductions</label>
+            </FormField>
+
+            <FormField label="Deductions (Rs.)">
               <input
                 type="number"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className={inputClasses}
                 value={formData.deductions}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const sanitized = val.length > 1 && val.startsWith('0') ? val.replace(/^0+/, '') : val;
-                  setFormData({...formData, deductions: sanitized});
-                }}
+                onChange={(e) => setFormData({...formData, deductions: e.target.value})}
               />
-            </div>
-          </div>
+            </FormField>
 
-          <div className="bg-gray-50 p-4 rounded-lg flex items-center justify-between border border-gray-100">
-            <div>
-              <p className="text-xs text-gray-500 font-medium uppercase">Net Salary</p>
-              <p className="text-2xl font-bold text-indigo-700">NPR {formData.net_salary.toLocaleString()}</p>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Calculated Net Salary</p>
+              <p className="text-xl font-black text-primary">Rs. {formData.net_salary}</p>
             </div>
-            <div className="text-right">
-              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Status</label>
-              <select
-                className={`px-3 py-1 border rounded-md text-sm font-bold uppercase ${
-                  formData.status === 'Paid' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                }`}
-                value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value as 'Paid' | 'Pending'})}
-              >
-                <option value="Pending">Pending</option>
-                <option value="Paid">Paid</option>
-              </select>
-            </div>
-          </div>
+          </FormSection>
 
-          <div className="pt-4 flex space-x-3">
-            <button
+          <FormSection title="Payment Details" icon={Calendar}>
+            <FormField label="Payment Date" required>
+              <NepaliDatePicker
+                value={formData.payment_date}
+                onChange={(date) => setFormData({...formData, payment_date: date})}
+              />
+            </FormField>
+
+            <FormField label="Payment Status" required>
+              <div className="relative">
+                <select
+                  className={selectClasses}
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Paid">Paid</option>
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+              </div>
+            </FormField>
+          </FormSection>
+
+          {/* Action Buttons */}
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm disabled:bg-indigo-400"
+              loading={submitting}
+              className="flex-[2] h-12"
             >
-              {editingRecord ? 'Update Record' : 'Save Record'}
-            </button>
+              {editingRecord ? 'Update Record' : 'Generate Payroll'}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -403,34 +389,36 @@ export default function PayrollPage() {
       <Modal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)} 
-        title="Confirm Delete"
+        title="Confirm Removal"
         loading={submitting}
       >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+        <div className="text-center py-4">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-rose-50 text-rose-600 mb-6 shadow-sm">
+            <AlertTriangle className="h-8 w-8" />
           </div>
-          <p className="text-sm text-gray-600 mb-6">
-            Are you sure you want to delete the payroll record for <span className="font-bold text-gray-900">{recordToDelete?.user?.name}</span>?
+          <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight">Remove Payroll Record?</h4>
+          <p className="text-sm text-slate-500 mb-8 font-medium">
+            Are you sure you want to delete the payroll record for <span className="font-black text-slate-900">{recordToDelete?.user?.name}</span>?
           </p>
           <div className="flex space-x-3">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm disabled:bg-red-400"
+              loading={submitting}
+              className="flex-1 h-12"
             >
-              Delete
-            </button>
+              Yes, Remove
+            </Button>
           </div>
         </div>
       </Modal>
-    </div>
+    </ResponsiveLayout>
   );
 }

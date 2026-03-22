@@ -3,8 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import Modal from '@/components/Modal';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import FormField, { inputClasses, selectClasses, textareaClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import { 
   Plus,
   Loader2,
@@ -14,7 +19,11 @@ import {
   Briefcase,
   Award,
   AlertTriangle,
-  User as UserIcon
+  User as UserIcon,
+  ChevronRight,
+  Info,
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 
 interface User {
@@ -153,150 +162,180 @@ export default function LawyersPage() {
 
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
-
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="Search lawyers..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-          </div>
-          <button 
-            onClick={handleOpenCreateModal}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Lawyer</span>
-          </button>
-        </header>
-
-        <main className="p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Lawyers</h2>
-            <p className="text-gray-500 text-sm">Manage law firm attorneys and specializations.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lawyers.map((item) => (
-              <div key={item.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="bg-indigo-100 p-3 rounded-lg text-indigo-700">
-                    <Briefcase className="h-6 w-6" />
-                  </div>
-                  <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleOpenEditModal(item)}
-                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleOpenDeleteModal(item)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <h3 className="font-bold text-gray-900 text-lg mb-1">{item.user?.name || 'Lawyer Name'}</h3>
-                <p className="text-indigo-600 text-xs font-bold uppercase mb-3">{item.specialization}</p>
-                <div className="flex items-center text-sm text-gray-500 mb-2">
-                  <Award className="h-4 w-4 mr-1" />
-                  {item.experience_years} Years Experience
-                </div>
-                <div className="mt-4">
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                    item.availability_status === 'available' ? 'bg-green-100 text-green-700' : 
-                    item.availability_status === 'busy' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                  }`}>
-                    {item.availability_status.replace('_', ' ')}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
+    <ResponsiveLayout user={user} title="Firm Management">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Legal Professionals</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Manage firm partners, associates, and staff lawyers.</p>
+        </div>
+        
+        <Button 
+          onClick={handleOpenCreateModal}
+          icon={Plus}
+          className="sm:w-auto w-full"
+        >
+          Add Lawyer
+        </Button>
       </div>
 
-      {/* Create/Edit Modal */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {lawyers.map((lawyer) => (
+          <Card key={lawyer.id} className="group relative overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-primary border border-slate-100 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <UserIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 leading-tight">{lawyer.user?.name}</h3>
+                  <Badge variant={
+                    lawyer.availability_status === 'available' ? 'success' :
+                    lawyer.availability_status === 'busy' ? 'warning' : 'destructive'
+                  } className="mt-1">
+                    {lawyer.availability_status.replace('_', ' ')}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenEditModal(lawyer)}
+                  className="text-slate-400 hover:text-primary"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenDeleteModal(lawyer)}
+                  className="text-slate-400 hover:text-rose-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t border-slate-50">
+              <div className="flex items-center text-[11px] text-slate-600 font-bold uppercase tracking-wider">
+                <Briefcase className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                <span>{lawyer.specialization}</span>
+              </div>
+              <div className="flex items-center text-[11px] text-slate-600 font-bold uppercase tracking-wider">
+                <Award className="h-3.5 w-3.5 mr-2 text-slate-400" />
+                <span>{lawyer.experience_years} Years Experience</span>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between">
+              <button 
+                onClick={() => router.push(`/lawyers/${lawyer.id}/cases`)}
+                className="text-[10px] font-black text-primary hover:underline uppercase tracking-[0.15em] flex items-center"
+              >
+                View Assignments <ChevronRight className="h-3 w-3 ml-1" />
+              </button>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* New/Edit Lawyer Modal */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={editingLawyer ? 'Edit Lawyer' : 'Add New Lawyer'}
+        title={editingLawyer ? 'Edit Professional Record' : 'Register New Lawyer'}
         loading={submitting}
+        fullScreenMobile
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select User</label>
-            <select
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.user_id}
-              onChange={(e) => setFormData({...formData, user_id: e.target.value})}
-            >
-              <option value="">Select a user...</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Criminal Law, Civil Litigation"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.specialization}
-              onChange={(e) => setFormData({...formData, specialization: e.target.value})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
-            <input
-              type="number"
-              required
-              min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.experience_years}
-              onChange={(e) => setFormData({...formData, experience_years: parseInt(e.target.value) || 0})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Availability Status</label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.availability_status}
-              onChange={(e) => setFormData({...formData, availability_status: e.target.value as any})}
-            >
-              <option value="available">Available</option>
-              <option value="busy">Busy</option>
-              <option value="on_leave">On Leave</option>
-            </select>
-          </div>
-          <div className="pt-4 flex space-x-3">
-            <button
+        <form onSubmit={handleSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="User Assignment" icon={Info}>
+            <div className="sm:col-span-2">
+              <FormField label="Linked System User" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={formData.user_id}
+                    onChange={(e) => setFormData({...formData, user_id: e.target.value})}
+                  >
+                    <option value="">Select User...</option>
+                    {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
+            </div>
+          </FormSection>
+
+          <FormSection title="Professional Background" icon={ShieldCheck}>
+            <div className="sm:col-span-2">
+              <FormField label="Area of Specialization" required>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Criminal Law, Corporate Law"
+                  className={inputClasses}
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                />
+              </FormField>
+            </div>
+
+            <FormField label="Years of Experience" required>
+              <input
+                type="number"
+                required
+                className={inputClasses}
+                value={formData.experience_years}
+                onChange={(e) => setFormData({...formData, experience_years: parseInt(e.target.value)})}
+              />
+            </FormField>
+
+            <FormField label="Availability Status" required>
+              <div className="relative">
+                <select
+                  className={selectClasses}
+                  value={formData.availability_status}
+                  onChange={(e) => setFormData({...formData, availability_status: e.target.value as any})}
+                >
+                  <option value="available">Available</option>
+                  <option value="busy">Busy / In-Court</option>
+                  <option value="on_leave">On Leave</option>
+                </select>
+                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+              </div>
+            </FormField>
+          </FormSection>
+
+          {/* Action Buttons - Fixed at bottom on mobile */}
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm disabled:bg-indigo-400"
+              loading={submitting}
+              className="flex-[2] h-12"
             >
-              {editingLawyer ? 'Update Lawyer' : 'Add Lawyer'}
-            </button>
+              {editingLawyer ? 'Update Record' : 'Register Lawyer'}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -305,34 +344,36 @@ export default function LawyersPage() {
       <Modal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)} 
-        title="Confirm Delete"
+        title="Confirm Removal"
         loading={submitting}
       >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+        <div className="text-center py-4">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-rose-50 text-rose-600 mb-6 shadow-sm">
+            <AlertTriangle className="h-8 w-8" />
           </div>
-          <p className="text-sm text-gray-600 mb-6">
-            Are you sure you want to delete <span className="font-bold text-gray-900">{lawyerToDelete?.user?.name}</span>'s lawyer profile?
+          <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight">Are you absolutely sure?</h4>
+          <p className="text-sm text-slate-500 mb-8 font-medium">
+            You are about to remove <span className="font-black text-slate-900">{lawyerToDelete?.user?.name}</span> from the firm's lawyer list.
           </p>
           <div className="flex space-x-3">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm disabled:bg-red-400"
+              loading={submitting}
+              className="flex-1 h-12"
             >
-              Delete
-            </button>
+              Yes, Remove
+            </Button>
           </div>
         </div>
       </Modal>
-    </div>
+    </ResponsiveLayout>
   );
 }

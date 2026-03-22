@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import PrintLayout from '@/components/PrintLayout';
 import { 
   Briefcase, 
@@ -20,9 +20,17 @@ import {
   Trash2,
   File,
   X,
-  Loader2
+  Loader2,
+  ChevronRight,
+  Info,
+  Gavel
 } from 'lucide-react';
 import Modal from '@/components/Modal';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import Card, { CardHeader, CardTitle, CardContent } from '@/components/Card';
+import FormField, { inputClasses, selectClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 
 interface Document {
   id: number;
@@ -184,331 +192,339 @@ export default function ClientCasesPage({ params }: { params: Promise<{ id: stri
 
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   if (!client) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <p className="text-gray-500 mb-4">Client not found.</p>
-        <button onClick={() => router.back()} className="text-indigo-600 hover:underline">Go Back</button>
-      </div>
+      <ResponsiveLayout user={user} title="Client Not Found">
+        <div className="flex flex-col items-center justify-center py-20">
+          <Info className="h-12 w-12 text-slate-300 mb-4" />
+          <h2 className="text-xl font-black text-slate-900 mb-2">Client file not found</h2>
+          <p className="text-slate-500 mb-8">The client you are looking for might have been deleted or moved.</p>
+          <Button onClick={() => router.push('/clients')}>Back to Inventory</Button>
+        </div>
+      </ResponsiveLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex print:bg-white">
-      <div className="print:hidden">
-        <Sidebar />
-      </div>
-
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8 print:hidden">
+    <ResponsiveLayout user={user} title={`Case File: ${client.contact_person}`}>
+      <PrintLayout title={`Legal Case Summary: ${client.contact_person}`}>
+        {/* Header Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0 print:hidden">
           <button 
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
+            className="flex items-center text-slate-500 hover:text-primary transition-colors text-sm font-bold"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            <span>Back to Clients</span>
+            Back to Client Registry
           </button>
-          <button 
-            onClick={handlePrint}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
-          >
-            <Printer className="h-4 w-4" />
-            <span>Print Report</span>
-          </button>
-        </header>
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" size="sm" onClick={handlePrint} className="text-[10px] font-black uppercase tracking-widest">
+              <Printer className="h-4 w-4 mr-2" />
+              Print File
+            </Button>
+          </div>
+        </div>
 
-        <main className="p-8 max-w-5xl mx-auto">
-          <PrintLayout title="Client Case Summary">
-            {/* Client Profile Card */}
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8 print:shadow-none print:border-none print:p-0">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center space-x-4">
-                  <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-2xl uppercase print:hidden">
-                    {client.contact_person.charAt(0)}
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-bold text-gray-900">{client.contact_person}</h2>
-                    <p className="text-indigo-600 font-medium">{client.client_type} Client</p>
-                  </div>
+        {/* Client Profile Card */}
+        <Card className="bg-slate-900 text-white border-none shadow-xl shadow-slate-200/50 mb-10 overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <UserIcon size={120} />
+          </div>
+          <CardContent className="p-8 sm:p-10 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
+              <div className="flex items-center space-x-5">
+                <div className="h-16 w-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white font-black text-2xl uppercase">
+                  {client.contact_person.charAt(0)}
                 </div>
-                <div className="text-right print:hidden">
-                  <p className="text-xs text-gray-400 uppercase font-bold tracking-widest">Client Profile</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center text-gray-600">
-                  <div className="h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center mr-4 text-gray-400 print:hidden">
-                    <UserIcon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase">Phone Number</p>
-                    <p className="font-medium">{client.phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-center text-gray-600">
-                  <div className="h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center mr-4 text-gray-400 print:hidden">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase">Address</p>
-                    <p className="font-medium">{client.address}</p>
+                <div>
+                  <h2 className="text-3xl font-black tracking-tight leading-tight">{client.contact_person}</h2>
+                  <div className="flex items-center mt-1 space-x-2">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] bg-primary/20 px-2 py-0.5 rounded-md">{client.client_type}</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Registry ID: #{client.id}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Cases Section */}
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                <Briefcase className="h-5 w-5 mr-2 text-indigo-600 print:hidden" />
-                Associated Cases ({client.cases.length})
-              </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 border-t border-white/10">
+              <div className="flex items-center space-x-4">
+                <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Mailing Address</p>
+                  <p className="font-bold text-sm text-slate-100">{client.address}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                  <Calendar size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Contact Number</p>
+                  <p className="font-bold text-sm text-slate-100">{client.phone}</p>
+                </div>
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-6">
-              {client.cases.length > 0 ? (
-                client.cases.map((item) => (
-                  <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden print:shadow-none print:border print:border-gray-200">
-                    <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+        {/* Cases Section */}
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center">
+            <Briefcase className="h-4 w-4 mr-2 text-primary" />
+            Matter Inventory ({client.cases.length})
+          </h3>
+        </div>
+
+        <div className="space-y-8">
+          {client.cases.length > 0 ? (
+            client.cases.map((item) => (
+              <Card key={item.id} className="overflow-hidden group">
+                <div className="h-1.5 bg-slate-100 w-full group-hover:bg-primary transition-colors" />
+                <CardContent className="p-8">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-8">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">Ref: {item.case_number}</span>
+                        <Badge variant={item.status === 'Open' ? 'success' : item.status === 'Pending' ? 'warning' : 'default'}>
+                          {item.status}
+                        </Badge>
+                      </div>
+                      <h4 className="text-xl font-black text-slate-900 tracking-tight leading-tight">{item.title}</h4>
+                    </div>
+                    <div className="mt-4 sm:mt-0">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleOpenUploadModal(item)}
+                        icon={Plus}
+                        className="text-[10px] font-black uppercase tracking-widest h-10 print:hidden"
+                      >
+                        Vault File
+                      </Button>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">
+                    {item.description || 'No detailed brief provided for this matter.'}
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 py-6 border-y border-slate-50">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                        <Scale size={14} />
+                      </div>
                       <div>
-                        <div className="flex items-center space-x-2 mb-0.5">
-                          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Case ID: {item.case_number}</span>
-                          {item.case_type_code && (
-                            <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[9px] font-bold border border-indigo-200 uppercase tracking-tighter">
-                              {item.case_type_code}
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="text-lg font-bold text-gray-900">{item.title}</h4>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Counsel</p>
+                        <p className="text-xs font-bold text-slate-900">{item.lawyer?.user?.name || 'Unassigned'}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                        item.status === 'Open' ? 'bg-green-100 text-green-700' : 
-                        item.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {item.status}
-                      </span>
                     </div>
-                    <div className="p-6">
-                      <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                        {item.description || 'No description provided for this case.'}
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-50">
-                        <div className="flex items-center text-sm">
-                          <UserIcon className="h-4 w-4 mr-2 text-gray-400 print:hidden" />
-                          <div>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">Lawyer</p>
-                            <p className="font-medium text-gray-700">{item.lawyer?.user?.name || 'N/A'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center text-sm">
-                          <Scale className="h-4 w-4 mr-2 text-gray-400 print:hidden" />
-                          <div>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">Court</p>
-                            <p className="font-medium text-gray-700">{item.court?.name || 'N/A'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center text-sm">
-                          <Calendar className="h-4 w-4 mr-2 text-gray-400 print:hidden" />
-                          <div>
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">Filed Date</p>
-                            <p className="font-medium text-gray-700">{item.filed_date}</p>
-                          </div>
-                        </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                        <Gavel size={14} />
                       </div>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tribunal</p>
+                        <p className="text-xs font-bold text-slate-900 truncate">{item.court?.name || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                        <Calendar size={14} />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Lodged On</p>
+                        <p className="text-xs font-bold text-slate-900">{item.filed_date}</p>
+                      </div>
+                    </div>
+                  </div>
 
-                      {/* Documents Section */}
-                      <div className="mt-8 pt-6 border-t border-gray-100 print:mt-10">
-                        <div className="flex items-center justify-between mb-4">
-                          <h5 className="text-sm font-bold text-gray-900 flex items-center uppercase tracking-tight">
-                            <FileText className="h-4 w-4 mr-2 text-indigo-600 print:hidden" />
-                            Case Documents ({item.documents?.length || 0})
-                          </h5>
-                          <button 
-                            onClick={() => handleOpenUploadModal(item)}
-                            className="flex items-center space-x-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors print:hidden"
-                          >
-                            <Plus className="h-3 w-3" />
-                            <span>Add Document</span>
-                          </button>
-                        </div>
+                  {/* Documents Section */}
+                  <div className="mt-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h5 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center">
+                        <FileText className="h-3.5 w-3.5 mr-2 text-primary" />
+                        Digital Vault ({item.documents?.length || 0})
+                      </h5>
+                    </div>
 
-                        {item.documents && item.documents.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-1 print:gap-4">
-                            {item.documents.map((doc) => (
-                              <div key={doc.id} className="group relative bg-gray-50 border border-gray-100 rounded-xl p-4 transition-all print:bg-white print:border-b print:border-gray-100 print:rounded-none print:px-0 print:py-3 break-inside-avoid">
-                                <div className="flex items-start space-x-3">
-                                  <div className="h-10 w-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-indigo-600 print:hidden">
-                                    <File className="h-5 w-5" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-0.5 truncate">
-                                      {doc.category || 'General Document'}
-                                    </p>
-                                    <h6 className="text-sm font-bold text-gray-900 truncate mb-1">
-                                      {doc.file_name}
-                                    </h6>
-                                    {doc.description && (
-                                      <p className="text-xs text-gray-500 line-clamp-1 mb-2 print:line-clamp-none">
-                                        {doc.description}
-                                      </p>
-                                    )}
-                                    <div className="flex items-center space-x-3 print:hidden">
-                                      <button 
-                                        onClick={() => handleDownload(doc)}
-                                        className="flex items-center text-[10px] font-bold text-gray-500 hover:text-indigo-600 uppercase tracking-wider"
-                                      >
-                                        <Download className="h-3 w-3 mr-1" />
-                                        Download
-                                      </button>
-                                      <button 
-                                        onClick={() => handleDeleteDocument(doc.id)}
-                                        className="flex items-center text-[10px] font-bold text-gray-400 hover:text-red-600 uppercase tracking-wider"
-                                      >
-                                        <Trash2 className="h-3 w-3 mr-1" />
-                                        Delete
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
+                    {item.documents && item.documents.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {item.documents.map((doc) => (
+                          <div key={doc.id} className="group/doc relative bg-slate-50/50 border border-slate-100 rounded-2xl p-4 hover:border-primary/20 transition-all flex items-start space-x-4">
+                            <div className="h-10 w-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-primary group-hover/doc:scale-110 transition-transform">
+                              <File size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mb-0.5 truncate">
+                                {doc.category || 'General'}
+                              </p>
+                              <h6 className="text-xs font-black text-slate-900 truncate mb-1">
+                                {doc.file_name}
+                              </h6>
+                              <div className="flex items-center space-x-3 opacity-0 group-hover/doc:opacity-100 transition-opacity mt-2 print:hidden">
+                                <button 
+                                  onClick={() => handleDownload(doc)}
+                                  className="text-[9px] font-black text-slate-400 hover:text-primary uppercase tracking-widest flex items-center"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Download
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteDocument(doc.id)}
+                                  className="text-[9px] font-black text-slate-400 hover:text-rose-500 uppercase tracking-widest flex items-center"
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Remove
+                                </button>
                               </div>
-                            ))}
+                            </div>
                           </div>
-                        ) : (
-                          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-8 text-center print:hidden">
-                            <FileText className="h-8 w-8 text-gray-300 mx-auto mb-3" />
-                            <p className="text-sm text-gray-500 font-medium">No documents uploaded for this case yet.</p>
-                          </div>
-                        )}
+                        ))}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl p-8 text-center print:hidden">
+                        <FileText className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No documents in vault</p>
+                      </div>
+                    )}
                   </div>
-                ))
-              ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-                  <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Briefcase className="h-8 w-8 text-gray-300" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">No Cases Found</h3>
-                  <p className="text-gray-500 max-w-sm mx-auto">This client doesn't have any cases associated with them yet.</p>
-                </div>
-              )}
-            </div>
-          </PrintLayout>
-        </main>
-      </div>
+                </CardContent>
+              </Card>
+            )
+          )) : (
+            <Card className="p-20 text-center opacity-40 border-none bg-transparent">
+              <Briefcase className="h-16 w-16 mx-auto mb-6" />
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">No Matter History</h3>
+            </Card>
+          )}
+        </div>
+      </PrintLayout>
 
       {/* Upload Modal */}
       <Modal 
         isOpen={isUploadModalOpen} 
         onClose={() => !uploading && setIsUploadModalOpen(false)}
-        title={`Upload Case Document`}
+        title={`Vault File Upload`}
+        fullScreenMobile
       >
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div className="bg-indigo-50 p-4 rounded-lg mb-4">
-            <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest mb-1">Case Target</p>
-            <h4 className="font-bold text-indigo-900">{selectedCase?.title}</h4>
-            <p className="text-xs text-indigo-600">ID: {selectedCase?.case_number}</p>
+        <form onSubmit={handleUpload} className="space-y-8 pb-24 sm:pb-0">
+          <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Matter Selection</p>
+            <h4 className="font-black text-slate-900 leading-tight">{selectedCase?.title}</h4>
+            <p className="text-xs text-slate-500 font-medium mt-1">Ref: {selectedCase?.case_number}</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">Document Category</label>
-            <select
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={uploadFormData.category}
-              onChange={(e) => setUploadFormData({...uploadFormData, category: e.target.value})}
-            >
-              {DOCUMENT_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+          <FormSection title="File Classification" icon={Info}>
+            <div className="sm:col-span-2">
+              <FormField label="Document Category" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={uploadFormData.category}
+                    onChange={(e) => setUploadFormData({...uploadFormData, category: e.target.value})}
+                  >
+                    {DOCUMENT_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
+            </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">Description (Optional)</label>
-            <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm min-h-[80px]"
-              placeholder="Add some details about this document..."
-              value={uploadFormData.description}
-              onChange={(e) => setUploadFormData({...uploadFormData, description: e.target.value})}
-            />
-          </div>
+            <div className="sm:col-span-2">
+              <FormField label="Internal Notes (Optional)">
+                <textarea
+                  className={inputClasses}
+                  rows={3}
+                  placeholder="Details for internal reference..."
+                  value={uploadFormData.description}
+                  onChange={(e) => setUploadFormData({...uploadFormData, description: e.target.value})}
+                />
+              </FormField>
+            </div>
+          </FormSection>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">Select File</label>
-            <div className={`relative border-2 border-dashed rounded-xl p-8 transition-colors ${
-              uploadFormData.file ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-indigo-400'
-            }`}>
-              <input
-                type="file"
-                required
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={(e) => setUploadFormData({...uploadFormData, file: e.target.files?.[0] || null})}
-                accept=".pdf,.doc,.docx,image/*"
-              />
-              <div className="text-center">
+          <FormSection title="Source Document" icon={Upload}>
+            <div className="sm:col-span-2">
+              <div className={`relative border-2 border-dashed rounded-2xl p-10 transition-all flex flex-col items-center justify-center text-center ${
+                uploadFormData.file ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary/50'
+              }`}>
+                <input
+                  type="file"
+                  required
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  onChange={(e) => setUploadFormData({...uploadFormData, file: e.target.files?.[0] || null})}
+                  accept=".pdf,.doc,.docx,image/*"
+                />
+                
                 {uploadFormData.file ? (
                   <>
-                    <File className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-green-700 truncate px-4">{uploadFormData.file.name}</p>
+                    <div className="h-16 w-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-primary mb-4">
+                      <File className="h-8 w-8" />
+                    </div>
+                    <p className="text-sm font-black text-slate-900 truncate max-w-[250px]">{uploadFormData.file.name}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ready for vaulting</p>
                     <button 
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setUploadFormData({...uploadFormData, file: null});
                       }}
-                      className="mt-2 text-xs text-red-500 hover:underline flex items-center justify-center mx-auto"
+                      className="mt-4 text-[10px] font-black text-rose-500 hover:underline uppercase tracking-widest z-20"
                     >
-                      <X className="h-3 w-3 mr-1" /> Remove
+                      Remove Selection
                     </button>
                   </>
                 ) : (
                   <>
-                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Click or drag to upload</p>
-                    <p className="text-xs text-gray-400 mt-1">PDF, DOCX, or Images (Max 10MB)</p>
+                    <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-4 group-hover:scale-110 transition-transform">
+                      <Upload className="h-8 w-8" />
+                    </div>
+                    <p className="text-sm font-black text-slate-900 uppercase tracking-tight">Drop file or click to browse</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Support: PDF, DOCX, Images (Max 10MB)</p>
                   </>
                 )}
               </div>
             </div>
-          </div>
+          </FormSection>
 
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100">
-            <button
+          {/* Action Buttons */}
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button
               type="button"
-              disabled={uploading}
+              variant="outline"
               onClick={() => setIsUploadModalOpen(false)}
-              className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 uppercase tracking-widest disabled:opacity-50"
+              className="flex-1 h-12"
+              disabled={uploading}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={uploading || !uploadFormData.file}
-              className="flex items-center space-x-2 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-bold uppercase tracking-widest disabled:opacity-50"
+              loading={uploading}
+              className="flex-[2] h-12 shadow-xl shadow-primary/20"
+              disabled={!uploadFormData.file}
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Uploading...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  <span>Upload Document</span>
-                </>
-              )}
-            </button>
+              Vault Document
+            </Button>
           </div>
         </form>
       </Modal>
-    </div>
+    </ResponsiveLayout>
   );
 }

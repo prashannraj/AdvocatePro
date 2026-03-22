@@ -3,8 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import Sidebar from '@/components/Sidebar';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import Modal from '@/components/Modal';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import Badge from '@/components/Badge';
+import { cn } from '@/lib/utils';
+import FormField, { inputClasses, selectClasses, textareaClasses } from '@/components/FormField';
+import FormSection from '@/components/FormSection';
 import { 
   Plus,
   Loader2,
@@ -17,7 +23,10 @@ import {
   FileText,
   Briefcase,
   Upload,
-  X
+  X,
+  ChevronRight,
+  Filter,
+  Info
 } from 'lucide-react';
 
 const DOCUMENT_CATEGORIES = [
@@ -57,6 +66,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,7 +129,7 @@ export default function DocumentsPage() {
       documentable_type: doc.documentable_type,
       category: doc.category || DOCUMENT_CATEGORIES[0],
       description: doc.description || '',
-      file: null, // Files cannot be "edited" easily, they are replaced
+      file: null,
     });
     setIsModalOpen(true);
   };
@@ -144,8 +154,6 @@ export default function DocumentsPage() {
       }
 
       if (editingDocument) {
-        // Since we are using multipart/form-data for uploads, 
-        // we might need to use POST with _method=PUT for Laravel if it's a PUT request
         await api.post(`/documents/${editingDocument.id}?_method=PUT`, submitData);
       } else {
         await api.post('/documents', submitData);
@@ -154,12 +162,6 @@ export default function DocumentsPage() {
       fetchData();
     } catch (error: any) {
       console.error('Error saving document:', error);
-      if (error.response?.data?.errors) {
-        const firstError = Object.values(error.response.data.errors)[0] as string[];
-        alert(`Validation Error: ${firstError[0]}`);
-      } else {
-        alert('Failed to save document. Please check the data.');
-      }
     } finally {
       setSubmitting(false);
     }
@@ -174,7 +176,6 @@ export default function DocumentsPage() {
       fetchData();
     } catch (error) {
       console.error('Error deleting document:', error);
-      alert('Failed to delete document.');
     } finally {
       setSubmitting(false);
     }
@@ -182,12 +183,9 @@ export default function DocumentsPage() {
 
   const handleDownload = async (doc: Document) => {
     try {
-      // Use window.open for direct download link if backend supports it
-      // or fetch via api and create a blob
       const response = await api.get(`/documents/${doc.id}/download`, {
         responseType: 'blob',
       });
-      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -197,206 +195,234 @@ export default function DocumentsPage() {
       link.remove();
     } catch (error) {
       console.error('Error downloading document:', error);
-      alert('Failed to download document. It might not exist on the server.');
     }
   };
 
+  const filteredDocuments = documents.filter(doc => 
+    doc.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.documentable?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (!user || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-primary rounded-2xl p-3 mx-auto mb-4 shadow-xl shadow-primary/20 flex items-center justify-center animate-pulse">
+            <img src="/logo without background.png" alt="Logo" className="h-full w-full object-contain brightness-0 invert" />
+          </div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Advocate Pro</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <Sidebar />
-
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="Search documents..." className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-          </div>
-          <button 
-            onClick={handleOpenCreateModal}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Upload Document</span>
-          </button>
-        </header>
-
-        <main className="p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Legal Documents</h2>
-            <p className="text-gray-500 text-sm">View and manage documents associated with legal cases.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {documents.length > 0 ? (
-              documents.map((doc) => (
-                <div key={doc.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col group relative">
-                  <div className="absolute top-2 right-2 flex opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => handleOpenEditModal(doc)}
-                      className="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleOpenDeleteModal(doc)}
-                      className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="bg-red-50 p-4 rounded-xl text-red-600 mb-4 self-center">
-                    <File className="h-8 w-8" />
-                  </div>
-                  
-                  <h3 className="font-bold text-gray-900 text-sm mb-1 truncate text-center">{doc.file_name}</h3>
-                  <p className="text-[10px] text-indigo-600 font-bold uppercase mb-2 text-center">{doc.file_type}</p>
-                  
-                  <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between">
-                    <div className="flex items-center text-[10px] text-gray-500">
-                      <Briefcase className="h-3 w-3 mr-1" />
-                      <span className="truncate max-w-[100px]">{doc.documentable?.title || 'No Case'}</span>
-                    </div>
-                    <button 
-                      onClick={() => handleDownload(doc)}
-                      className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                    >
-                      <Download className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full py-20 bg-white rounded-xl border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500">
-                <FileText className="h-12 w-12 mb-4 opacity-20" />
-                <p>No documents found. Start by uploading one.</p>
-              </div>
-            )}
-          </div>
-        </main>
+    <ResponsiveLayout 
+      user={user} 
+      title="Legal Vault"
+      onSearch={(q) => setSearchQuery(q)}
+      onPrint={() => window.print()}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Documents</h1>
+          <p className="text-slate-500 font-medium text-sm mt-1">Access and manage all legal filings and evidence.</p>
+        </div>
+        
+        <Button 
+          onClick={handleOpenCreateModal}
+          icon={Upload}
+          className="sm:w-auto w-full"
+        >
+          Upload Document
+        </Button>
       </div>
 
-      {/* Upload/Edit Modal */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {filteredDocuments.length > 0 ? (
+          filteredDocuments.map((doc) => (
+            <Card key={doc.id} className="group relative overflow-hidden flex flex-col h-full">
+              <div className="absolute top-2 right-2 flex opacity-0 group-hover:opacity-100 transition-all">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenEditModal(doc)}
+                  className="h-8 w-8 text-slate-400 hover:text-primary"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => handleOpenDeleteModal(doc)}
+                  className="h-8 w-8 text-slate-400 hover:text-rose-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="bg-slate-50 p-4 rounded-2xl text-primary mb-4 self-center group-hover:scale-110 transition-transform duration-300 border border-slate-100 shadow-sm">
+                <FileText className="h-8 w-8" />
+              </div>
+              
+              <h3 className="font-black text-slate-900 text-sm mb-1 truncate text-center px-2">{doc.file_name}</h3>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-4 text-center">{doc.file_type}</p>
+              
+              <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
+                <div className="flex items-center text-[10px] text-slate-500 font-bold uppercase tracking-wider overflow-hidden">
+                  <Briefcase className="h-3 w-3 mr-1.5 text-slate-400 flex-shrink-0" />
+                  <span className="truncate">{doc.documentable?.title || 'General'}</span>
+                </div>
+                <button 
+                  onClick={() => handleDownload(doc)}
+                  className="h-8 w-8 rounded-lg bg-primary/5 text-primary flex items-center justify-center hover:bg-primary hover:text-white transition-all"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-full py-20 bg-white rounded-3xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
+            <FileText className="h-12 w-12 mb-4 opacity-20" />
+            <p className="font-black uppercase tracking-[0.2em] text-xs">No documents found</p>
+          </div>
+        )}
+      </div>
+
+      {/* FAB for Mobile */}
+      <button 
+        onClick={handleOpenCreateModal}
+        className="md:hidden fixed bottom-24 right-6 h-14 w-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/40 flex items-center justify-center z-40 active:scale-90 transition-transform"
+      >
+        <Upload className="h-7 w-7" />
+      </button>
+
+      {/* Upload/Edit Modal - Full screen on mobile */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
-        title={editingDocument ? 'Edit Document' : 'Upload New Document'}
+        title={editingDocument ? 'Edit Document Entry' : 'Upload Legal Document'}
+        loading={submitting}
+        fullScreenMobile
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Related Case</label>
-            <select
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.documentable_id}
-              onChange={(e) => setFormData({...formData, documentable_id: e.target.value})}
-            >
-              <option value="">Select a case...</option>
-              {cases.map(c => (
-                <option key={c.id} value={c.id}>{c.case_number} - {c.title}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Document Category</label>
-            <select
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-            >
-              {DOCUMENT_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
-            <textarea
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              rows={3}
-              placeholder="Add some details about this document..."
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {editingDocument ? 'Replace File (Optional)' : 'Select File'}
-            </label>
-            <div className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
-              formData.file ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-indigo-400'
-            }`}>
-              <input
-                type="file"
-                required={!editingDocument}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})}
-                accept=".pdf,.doc,.docx,image/*"
-              />
-              <div className="text-center">
-                {formData.file ? (
-                  <>
-                    <File className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-green-700 truncate px-4">{formData.file.name}</p>
-                    <button 
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFormData({...formData, file: null});
-                      }}
-                      className="mt-2 text-xs text-red-500 hover:underline flex items-center justify-center mx-auto"
-                    >
-                      <X className="h-3 w-3 mr-1" /> Remove
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Click or drag to upload</p>
-                    <p className="text-xs text-gray-400 mt-1">PDF, DOCX, or Images (Max 10MB)</p>
-                  </>
-                )}
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-8 pb-24 sm:pb-0">
+          <FormSection title="Document Details" icon={Info}>
+            <div className="sm:col-span-2">
+              <FormField label="Link to Legal Matter" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={formData.documentable_id}
+                    onChange={(e) => setFormData({...formData, documentable_id: e.target.value})}
+                  >
+                    <option value="">Select a case file...</option>
+                    {cases.map(c => (
+                      <option key={c.id} value={c.id}>{c.case_number} - {c.title}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
             </div>
-          </div>
 
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100">
-            <button
+            <div className="sm:col-span-2">
+              <FormField label="Document Category" required>
+                <div className="relative">
+                  <select
+                    required
+                    className={selectClasses}
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  >
+                    {DOCUMENT_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 rotate-90 pointer-events-none" />
+                </div>
+              </FormField>
+            </div>
+
+            <div className="sm:col-span-2">
+              <FormField label="Brief Description (Optional)">
+                <textarea
+                  className={cn(textareaClasses, "min-h-[100px]")}
+                  rows={3}
+                  placeholder="Summarize the content of this document..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                />
+              </FormField>
+            </div>
+          </FormSection>
+
+          <FormSection title="File Upload" icon={Upload}>
+            <div className="sm:col-span-2">
+              <FormField label={editingDocument ? 'Replace Current File' : 'Select Legal File'}>
+                <div className={`relative border-2 border-dashed rounded-2xl p-8 transition-all ${
+                  formData.file ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200 hover:border-primary/30 bg-white'
+                }`}>
+                  <input
+                    type="file"
+                    required={!editingDocument}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => setFormData({...formData, file: e.target.files?.[0] || null})}
+                    accept=".pdf,.doc,.docx,image/*"
+                  />
+                  <div className="text-center">
+                    {formData.file ? (
+                      <>
+                        <div className="h-12 w-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <FileText className="h-6 w-6" />
+                        </div>
+                        <p className="text-sm font-black text-emerald-900 truncate px-4">{formData.file.name}</p>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({...formData, file: null});
+                          }}
+                          className="mt-2 text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center justify-center mx-auto"
+                        >
+                          <X className="h-3 w-3 mr-1" /> Remove File
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-12 w-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mx-auto mb-3">
+                          <Upload className="h-6 w-6" />
+                        </div>
+                        <p className="text-xs font-black text-slate-600 uppercase tracking-widest">Click or drag to upload</p>
+                        <p className="text-[10px] text-slate-400 mt-1 font-medium">PDF, DOCX, or Images (Max 10MB)</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </FormField>
+            </div>
+          </FormSection>
+
+          {/* Action Buttons - Fixed at bottom on mobile */}
+          <div className="fixed sm:static bottom-0 left-0 right-0 p-4 bg-white sm:bg-transparent border-t sm:border-t-0 border-slate-100 flex space-x-3 z-50">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+              className="flex-1 h-12"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={submitting}
-              className="flex items-center space-x-2 bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
+              loading={submitting}
+              className="flex-[2] h-12"
+              icon={editingDocument ? Edit : Upload}
             >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>{editingDocument ? 'Updating...' : 'Uploading...'}</span>
-                </>
-              ) : (
-                <>
-                  {editingDocument ? <Edit className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-                  <span>{editingDocument ? 'Update Document' : 'Upload Document'}</span>
-                </>
-              )}
-            </button>
+              {editingDocument ? 'Update Entry' : 'Upload File'}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -405,34 +431,36 @@ export default function DocumentsPage() {
       <Modal 
         isOpen={isDeleteModalOpen} 
         onClose={() => setIsDeleteModalOpen(false)} 
-        title="Confirm Delete"
+        title="Confirm Deletion"
         loading={submitting}
       >
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+        <div className="text-center py-4">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-rose-50 text-rose-600 mb-6 shadow-sm">
+            <AlertTriangle className="h-8 w-8" />
           </div>
-          <p className="text-sm text-gray-600 mb-6">
-            Are you sure you want to delete document <span className="font-bold text-gray-900">{documentToDelete?.file_name}</span>?
+          <h4 className="text-lg font-black text-slate-900 mb-2 uppercase tracking-tight">Are you absolutely sure?</h4>
+          <p className="text-sm text-slate-500 mb-8 font-medium">
+            You are about to delete <span className="font-black text-slate-900">{documentToDelete?.file_name}</span>. This action cannot be reversed.
           </p>
           <div className="flex space-x-3">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm"
+              className="flex-1 h-12"
             >
-              Cancel
-            </button>
-            <button
+              No, Keep it
+            </Button>
+            <Button
+              variant="destructive"
               onClick={handleDelete}
-              disabled={submitting}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm disabled:bg-red-400"
+              loading={submitting}
+              className="flex-1 h-12"
             >
-              Delete
-            </button>
+              Yes, Delete
+            </Button>
           </div>
         </div>
       </Modal>
-    </div>
+    </ResponsiveLayout>
   );
 }
