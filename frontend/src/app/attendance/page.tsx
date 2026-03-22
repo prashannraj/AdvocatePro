@@ -109,23 +109,37 @@ export default function AttendancePage() {
   };
 
   const handleOpenEditModal = (record: AttendanceRecord) => {
-    // Helper to extract time from potentially datetime string
-    const formatTime = (timeStr: string | null) => {
+    // Helper to extract and convert time to 24h format for HTML input
+    const parseTimeTo24h = (timeStr: string | null) => {
       if (!timeStr) return '';
-      // If it contains a space (date time), take the last part
+      
+      let timePart = timeStr;
       if (timeStr.includes(' ')) {
         const parts = timeStr.split(' ');
-        return parts[parts.length - 1].substring(0, 5); // Get HH:mm
+        timePart = parts.slice(1).join(' ');
       }
-      return timeStr.substring(0, 5);
+      
+      if (timePart.toUpperCase().includes('AM') || timePart.toUpperCase().includes('PM')) {
+        const isPM = timePart.toUpperCase().includes('PM');
+        const timeMatch = timePart.match(/(\d+):(\d+)/);
+        if (timeMatch) {
+          let h = parseInt(timeMatch[1], 10);
+          const m = timeMatch[2];
+          if (isPM && h < 12) h += 12;
+          if (!isPM && h === 12) h = 0;
+          return `${h.toString().padStart(2, '0')}:${m.padStart(2, '0')}`;
+        }
+      }
+      
+      return timePart.trim().substring(0, 5);
     };
 
     setEditingRecord(record);
     setFormData({
       user_id: record.user_id.toString(),
       date: record.date,
-      check_in: formatTime(record.check_in),
-      check_out: formatTime(record.check_out),
+      check_in: parseTimeTo24h(record.check_in),
+      check_out: parseTimeTo24h(record.check_out),
     });
     setIsModalOpen(true);
   };
@@ -176,9 +190,9 @@ export default function AttendancePage() {
     if (!timeStr) return '';
     if (timeStr.includes(' ')) {
       const parts = timeStr.split(' ');
-      return parts[parts.length - 1].substring(0, 5);
+      return parts.slice(1).join(' ');
     }
-    return timeStr.substring(0, 5);
+    return timeStr;
   };
 
   if (!user || loading) {
