@@ -27,8 +27,8 @@ export default function Modal({
       <div className={cn(
         "bg-white shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 relative",
         fullScreenMobile 
-          ? "w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-md sm:rounded-2xl" 
-          : "w-full max-w-md max-h-[90vh] rounded-2xl mx-4"
+          ? "w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl" 
+          : "w-full max-w-lg max-h-[90vh] rounded-2xl mx-4"
       )}>
         {/* Modal Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white flex-shrink-0">

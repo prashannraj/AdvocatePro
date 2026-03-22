@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api, { getNepaliDateNow } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import Modal from '@/components/Modal';
 import Badge from '@/components/Badge';
@@ -23,7 +24,8 @@ import {
   User as UserIcon,
   Calendar,
   ChevronRight,
-  Info
+  Info,
+  X
 } from 'lucide-react';
 
 interface User {
@@ -107,12 +109,23 @@ export default function AttendancePage() {
   };
 
   const handleOpenEditModal = (record: AttendanceRecord) => {
+    // Helper to extract time from potentially datetime string
+    const formatTime = (timeStr: string | null) => {
+      if (!timeStr) return '';
+      // If it contains a space (date time), take the last part
+      if (timeStr.includes(' ')) {
+        const parts = timeStr.split(' ');
+        return parts[parts.length - 1].substring(0, 5); // Get HH:mm
+      }
+      return timeStr.substring(0, 5);
+    };
+
     setEditingRecord(record);
     setFormData({
       user_id: record.user_id.toString(),
       date: record.date,
-      check_in: record.check_in,
-      check_out: record.check_out || '',
+      check_in: formatTime(record.check_in),
+      check_out: formatTime(record.check_out),
     });
     setIsModalOpen(true);
   };
@@ -157,6 +170,15 @@ export default function AttendancePage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const formatTimeForDisplay = (timeStr: string | null) => {
+    if (!timeStr) return '';
+    if (timeStr.includes(' ')) {
+      const parts = timeStr.split(' ');
+      return parts[parts.length - 1].substring(0, 5);
+    }
+    return timeStr.substring(0, 5);
   };
 
   if (!user || loading) {
@@ -220,14 +242,14 @@ export default function AttendancePage() {
                   <td className="px-6 py-4">
                     <Badge variant="success" className="flex items-center w-fit">
                       <Clock className="h-3 w-3 mr-1" />
-                      {item.check_in}
+                      {formatTimeForDisplay(item.check_in)}
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
                     {item.check_out ? (
                       <Badge variant="destructive" className="flex items-center w-fit">
                         <Clock className="h-3 w-3 mr-1" />
-                        {item.check_out}
+                        {formatTimeForDisplay(item.check_out)}
                       </Badge>
                     ) : (
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Still working</span>
@@ -280,9 +302,10 @@ export default function AttendancePage() {
             <div className="sm:col-span-2">
               <FormField label="Select Employee" required>
                 <div className="relative">
+                  <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
                   <select
                     required
-                    className={selectClasses}
+                    className={cn(selectClasses, "pl-11")}
                     value={formData.user_id}
                     onChange={(e) => setFormData({...formData, user_id: e.target.value})}
                   >
@@ -298,32 +321,39 @@ export default function AttendancePage() {
           </FormSection>
 
           <FormSection title="Time Tracking" icon={Clock}>
-            <FormField label="Date" required>
-              <NepaliDatePicker
-                value={formData.date}
-                onChange={(date) => setFormData({...formData, date: date})}
-              />
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Check In Time" required>
-                <input
-                  type="time"
-                  required
-                  className={inputClasses}
-                  value={formData.check_in}
-                  onChange={(e) => setFormData({...formData, check_in: e.target.value})}
-                />
-              </FormField>
-              <FormField label="Check Out Time">
-                <input
-                  type="time"
-                  className={inputClasses}
-                  value={formData.check_out}
-                  onChange={(e) => setFormData({...formData, check_out: e.target.value})}
+            <div className="sm:col-span-2">
+              <FormField label="Date" required>
+                <NepaliDatePicker
+                  value={formData.date}
+                  onChange={(date) => setFormData({...formData, date: date})}
                 />
               </FormField>
             </div>
+
+            <FormField label="Check In Time" required>
+              <div className="relative">
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+                <input
+                  type="time"
+                  required
+                  className={cn(inputClasses, "pl-11")}
+                  value={formData.check_in}
+                  onChange={(e) => setFormData({...formData, check_in: e.target.value})}
+                />
+              </div>
+            </FormField>
+
+            <FormField label="Check Out Time">
+              <div className="relative">
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none z-10" />
+                <input
+                  type="time"
+                  className={cn(inputClasses, "pl-11")}
+                  value={formData.check_out}
+                  onChange={(e) => setFormData({...formData, check_out: e.target.value})}
+                />
+              </div>
+            </FormField>
           </FormSection>
 
           {/* Action Buttons */}
@@ -333,13 +363,15 @@ export default function AttendancePage() {
               variant="outline"
               onClick={() => setIsModalOpen(false)}
               className="flex-1 h-12"
+              icon={X}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               loading={submitting}
-              className="flex-[2] h-12"
+              className="flex-[2] h-12 shadow-lg shadow-primary/20"
+              icon={editingRecord ? Edit : Plus}
             >
               {editingRecord ? 'Update Record' : 'Confirm Attendance'}
             </Button>
