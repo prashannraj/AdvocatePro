@@ -113,9 +113,11 @@ export default function AttendancePage() {
     const parseTimeTo24h = (timeStr: string | null) => {
       if (!timeStr) return '';
       
-      let timePart = timeStr;
-      if (timeStr.includes(' ')) {
-        const parts = timeStr.split(' ');
+      let timePart = timeStr.trim();
+      const parts = timePart.split(' ');
+      
+      // If the first part is a date (contains -), skip it
+      if (parts.length > 1 && parts[0].includes('-')) {
         timePart = parts.slice(1).join(' ');
       }
       
@@ -188,10 +190,12 @@ export default function AttendancePage() {
 
   const formatTimeForDisplay = (timeStr: string | null) => {
     if (!timeStr) return '';
-    if (timeStr.includes(' ')) {
-      const parts = timeStr.split(' ');
+    const parts = timeStr.trim().split(' ');
+    // If the first part contains a hyphen, it's a date, so we return the rest
+    if (parts.length > 1 && parts[0].includes('-')) {
       return parts.slice(1).join(' ');
     }
+    // Otherwise return the whole string
     return timeStr;
   };
 
